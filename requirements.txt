@@ -1,0 +1,4 @@
+blinker==1.4
+noise==1.2.2
+PyNDN==2.8b1
+sortedcontainers==2.0.2

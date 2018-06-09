@@ -1,0 +1,3 @@
+GRASS = 1
+WATER = 2
+MOUNTAIN = 3
