@@ -1,0 +1,48 @@
+\section{Names and data definition}
+\subsection{Data structure}
+
+\subsubsection{Base objects}
+
+\paragraph{Primitives}
+~
+\begin{lstlisting}
+Integer = <4 bytes signed integer>
+UID64  = <8 bytes unsigned integer>
+Character = <any utf-8 encoded unicode character>
+
+String = *(Character) "0"
+
+Number = Integer | UID64
+Primitives = Numbers | String
+
+GameId = UID64
+PeerId = UID64
+\end{lstlisting}
+
+\paragraph{Compounds}
+~
+\begin{lstlisting}
+Entity = 1*(Primitives)
+ArrayOfEntity := Length Length(Entity)
+
+GameObjectId = Integer
+GameObject = GameObjectId Entity
+\end{lstlisting}
+
+\subsubsection{Peers}
+
+\begin{lstlisting}
+Peer = PeerId String
+ArrayOfPeer = Length Length(Peer)
+\end{lstlisting}
+\subsubsection{Game}
+
+\subsection{Interest names}
+
+\begin{lstlisting}
+Broadcast := <"ndn"><"broadcast"><"mygame"><GameId>
+LocalRoute := <>+<"mygame"><GameId><PeerId>
+
+JoinInterest := <Broadcast><"join"><LocalRoute>
+LeaveInterest := <Broadcast><"leave"><PeerId>
+\end{lstlisting}

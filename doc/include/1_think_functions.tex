@@ -1,0 +1,10 @@
+\section{Think functions}
+
+All the game logic is done by what we are going to call \textit{think functions}. A think function is a single function that is responsible of a certain task. That task should be atomic if possible.
+Think function can be triggered by different ways, on action, loop or event. In this document those types are reffered as \textit{@on\_action}, \textit{@on\_loop}, \textit{@on\_event}.
+
+The first one happens when a new action occures, either emitted by the local peer or a distant one. A \textit{@on\_action} think function take as arguments the type of action and the parametters of that action.
+
+Next we have the \textit{@on\_loop} think function that will be executed at each loop iteration. To guarantee the atomicity of the think function it can be restrained to a specific entity. The function will then be called once for each object that is managed by the current peer with that object passed as argument.
+
+At last, the \textit{@on\_event} think function is used as an handler for system event.

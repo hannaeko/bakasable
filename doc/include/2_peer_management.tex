@@ -1,0 +1,68 @@
+\section{Peers Management}
+
+\subsection{Join process}
+
+\begin{minipage}{0.6\textwidth}\centering
+  \begin{tikzpicture}[node distance=2cm]
+    \node (start) [startstop] {Start};
+    \node (pro3) [process, below of=start] {Add itself to the local peer store};
+    \node (out1) [io, below of=pro3] {Send \\ JoinInterest};
+    \node (dec1) [decision, below of=out1] {Response?};
+    \node (pro1) [process, below of=dec1, yshift=-0.5cm] {Add the received peer list to the local peer store};
+    \node (pro2) [process, right of=dec1, xshift=2.5cm] {First peer in game, do nothing};
+    \node (stop) [startstop, below of=pro1] {End};
+
+    \draw [arrow] (start) -- (pro3);
+    \draw [arrow] (pro3) -- (out1);
+    \draw [arrow] (out1) -- (dec1);
+    \draw [arrow] (dec1) -- node[anchor=east] {yes} (pro1);
+    \draw [arrow] (dec1) -- node[anchor=south] {no} (pro2);
+    \draw [arrow] (pro1) -- (stop);
+    \draw [arrow] (pro2) |- (stop);
+  \end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}\centering
+  \begin{tikzpicture}[node distance=2cm]
+
+    \node (start) [startstop] {Start};
+    \node (in1) [io, below of=start] {Received JoinInterest};
+    \node (pro1) [process, below of=in1] {Get the closest PeerId to the new peer};
+    \node (dec1) [decision, below of=pro1, yshift=-0.5cm] {Is that PeerId me?};
+    \node (out1) [io, below of=dec1, yshift=-0.5cm] {Send back the peer list formatted as a PeerArray};
+    \node (pro2) [process, below of=out1] {Add the peer to the local peer store};
+    \node (stop) [startstop, below of=pro2] {End};
+
+    \draw [arrow] (start) -- (in1);
+    \draw [arrow] (in1) -- (pro1);
+    \draw [arrow] (pro1) -- (dec1);
+    \draw [arrow] (dec1) -- node[anchor=east] {yes} (out1);
+    \draw [arrow] (dec1.east) -- node[anchor=south] {no} ++ (1,0) |- (pro2.east);
+    \draw [arrow] (out1) -- (pro2);
+    \draw [arrow] (pro2) -- (stop);
+
+  \end{tikzpicture}
+\end{minipage}
+
+\subsection{Leave process}
+\begin{minipage}{0.5\textwidth}\centering
+  \begin{tikzpicture}[node distance=2cm]
+    \node (start) [startstop] {Start};
+    \node (out1) [io, below of=start] {Send\\ LeaveInterest};
+    \node (stop) [startstop, below of=out1] {End};
+
+    \draw [arrow] (start) -- (out1);
+    \draw [arrow] (out1) -- (stop);
+  \end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}\centering
+  \begin{tikzpicture}[node distance=2cm]
+    \node (start) [startstop] {Start};
+    \node (in1) [io, below of=start] {Received LeaveInterest};
+    \node (pro1) [process, below of=in1] {Remove the peer from the local peer store};
+    \node (stop) [startstop, below of=pro1] {End};
+
+    \draw [arrow] (start) -- (in1);
+    \draw [arrow] (in1) -- (pro1);
+    \draw [arrow] (pro1) -- (stop);
+  \end{tikzpicture}
+\end{minipage}
