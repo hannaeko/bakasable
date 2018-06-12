@@ -2,6 +2,7 @@ import math
 import hashlib
 import struct
 import logging
+import functools
 
 import pyndn
 
@@ -13,71 +14,69 @@ import logic.chunk
 
 
 class EntityManagement(object):
-    def __init__(self, face, game_id, peer_id):
-        self.face = face
-        self.game_id = game_id
-        self.peer_id = peer_id
+    def __init__(self, context):
+        self.context = context
 
         events.local_prefix_discovered.connect(self.register_prefix)
 
     def register_prefix(self, local_name_uri):
-        self.load_from(0, 0, 1)
-        self.face.registerPrefix(
+        self.context.face.registerPrefix(
             pyndn.Name(local_name_uri),
             None,
             utils.on_registration_failed,
             utils.on_registration_success)
 
-        self.face.setInterestFilter(
+        self.context.face.setInterestFilter(
             pyndn.InterestFilter(local_name_uri, utils.chunk_entites_regex),
             self.on_chunk_entities_interest)
 
-    #################
-    # Chunk loading #
-    #################
+    def load_chunk(self, x, y, callback=None):
+        """
+        Load chunk at chunk coordinates x and y.
 
-    def load_from(self, player_x, player_y, radius):
-        player_chunck_x = math.floor((player_x / 15))
-        player_chunck_y = math.floor((player_y / 15))
+        If the local peer is reponsible of the chunk, create it.
+        Else request it from a remote peer.
 
-        for x in range(player_chunck_x - radius, player_chunck_x + radius + 1):
-            for y in range(player_chunck_y - radius, player_chunck_y + radius + 1):
-                self.load_chunk(x, y)
-
-    def load_chunk(self, x, y):
-        chunk_uid = entities.MapChunk.gen_uid(self.game_id, x, y)
+        If provided, call the callback with no argument when data is available
+        in store.
+        """
+        chunk_uid = entities.objects.MapChunk.gen_uid(
+            self.context.game_id, x, y)
         chunk_peer = peers.peer_store.get_closest_peer(chunk_uid)
 
-        logging.debug(
-            'Loading chunk %d,%d from peer %d' % (x, y, chunk_peer.uid))
-        if self.peer_id == chunk_peer.uid:
-            self.create_chunk(self, x, y)
-        else:
-            self.send_chunk_entities_interest(chunk_peer.prefix, x, y)
+        if chunk_peer.uid == self.peer_id:
+            self.create_chunk(x, y)
+            if callback is not None:
+                callback()
 
-    def send_chunk_entities_interest(self, peer_prefix, chunk_x, chunk_y):
-        chunk_entities_name = pyndn.Name(peer_prefix) \
-            .append(str(chunk_x)) \
-            .append(str(chunk_y)) \
+        name = pyndn.Name(chunk_peer.prefix) \
+            .append('chunk') \
+            .append(str(x)).append(str(y)) \
             .append('entities')
-
-        self.face.expressInterest(
-            chunk_entities_name,
-            self.on_chunk_entities_data,
+        self.context.face.expressInterest(
+            name,
+            functools.partial(self.on_chunk_entities_data, callback),
             utils.on_timeout)
 
     def on_chunk_entities_interest(self, prefix, interest, face, interest_filter_id):
-        chunk_uid = entities.MapChunk.gen_uid(self.game_id, x, y)
-        chunk = entities.object_store.get_chunk(x, y)
+        x = int(interest.getName().get(-3))
+        y = int(interest.getName().get(-2))
 
-    def on_chunk_entities_data(self, interest, data):
-        logging.debug('Received chunk data.')
+        chunk_uid = entities.objects.MapChunk.gen_uid(
+            self.context.game_id, x, y)
+        chunk = self.context.entity_store.get(chunk_uid)
+        if chunk is not None:
+            self.send_chunk_entites_data(interest, face, chunk)
 
-    ####################
-    # Chunk generation #
-    ####################
+    def send_chunk_entities_data(self, interest, face, map_chunk):
+        chunk = entities.Chunk.deserialize(
+            entities.Chunk(map=map_chunk, entities=()))
 
-    def create_chunk(self, x, y):
-        chunk = logic.chunk.generate_chunk(self.game_id, x, y)
-        entities.object_store.add(chunk)
-        return chunk
+        chunk_data = pyndn.Data(interest.getName())
+        chunk_data.setContent(chunk)
+        face.putData(chunk_data)
+
+    def on_chunk_entities_data(self, callback, interest, data):
+        _, chunk = entities.Chunk.deserialize(data.getContent().toBytes())
+        self.context.entity_store.add(chunk.map)
+        self.context.entity_store.add(chunk.entities)

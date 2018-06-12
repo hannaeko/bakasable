@@ -17,13 +17,12 @@ class App(object):
 
         self.keychain = pyndn.security.KeyChain()
 
-        self.face = pyndn.Face('localhost')
+        self.face = pyndn.Face('192.168.20.161')
         self.face.setCommandSigningInfo(
             self.keychain, self.keychain.getDefaultCertificateName())
         self.peers_mngt = peers.PeerManagement(
             self.face, self.game_id, self.peer_id)
-        self.entities_mngt = entities.EntityManagement(
-            self.face, self.game_id, self.peer_id)
+        self.entities_mngt = entities.EntityManagement(self)
 
     def run(self):
         self.start()

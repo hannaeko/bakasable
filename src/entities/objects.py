@@ -8,6 +8,10 @@ from entities.primitives import (
     Number
 )
 
+from entities.game_objects import (
+    GameObject
+)
+
 
 class Peer(Entity):
     definition = (
@@ -28,7 +32,7 @@ class MapChunk(Entity):
     )
 
     @staticmethod
-    gen_uid(seed, x, y):
+    def gen_uid(seed, x, y):
         md5 = hashlib.md5()
         md5.update(struct.pack('!Qii', seed, x, y))
         return struct.unpack_from('!Q', md5.digest())[0]

@@ -1,3 +1,5 @@
+import random
+
 import noise
 
 
@@ -23,7 +25,7 @@ def generate_chunk_map(seed, x, y):
 
 
 def generate_chunk_entities(seed, x, y):
-    return (entities.Sheep(x=(x*15+8), y=(y*15+8), uid=), )
+    return (entities.Sheep(x=(x*15+8), y=(y*15+8), uid=random.getrandbits(64)), )
 
 
 def generate_chunk(seed, x, y):
