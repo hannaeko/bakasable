@@ -2,8 +2,6 @@ import logging
 import pyndn
 
 import utils
-import events
-import peers
 import entities
 
 

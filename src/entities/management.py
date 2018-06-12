@@ -17,17 +17,16 @@ class EntityManagement(object):
     def __init__(self, context):
         self.context = context
 
-        events.local_prefix_discovered.connect(self.register_prefix)
-
-    def register_prefix(self, local_name_uri):
+    def start(self):
         self.context.face.registerPrefix(
-            pyndn.Name(local_name_uri),
+            pyndn.Name(self.context.app_name),
             None,
             utils.on_registration_failed,
             utils.on_registration_success)
 
         self.context.face.setInterestFilter(
-            pyndn.InterestFilter(local_name_uri, utils.chunk_entites_regex),
+            pyndn.InterestFilter(
+                self.context.app_name, utils.chunk_entites_regex),
             self.on_chunk_entities_interest)
 
     def load_chunk(self, x, y, callback=None):
@@ -64,7 +63,7 @@ class EntityManagement(object):
 
         chunk_uid = entities.objects.MapChunk.gen_uid(
             self.context.game_id, x, y)
-        chunk = self.context.entity_store.get(chunk_uid)
+        chunk = self.context.object_store.get(chunk_uid)
         if chunk is not None:
             self.send_chunk_entites_data(interest, face, chunk)
 
@@ -78,5 +77,5 @@ class EntityManagement(object):
 
     def on_chunk_entities_data(self, callback, interest, data):
         _, chunk = entities.Chunk.deserialize(data.getContent().toBytes())
-        self.context.entity_store.add(chunk.map)
-        self.context.entity_store.add(chunk.entities)
+        self.context.object_store.add(chunk.map)
+        self.context.object_store.add(chunk.entities)

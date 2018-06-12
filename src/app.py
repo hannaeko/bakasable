@@ -23,8 +23,10 @@ class App(object):
             self.keychain, self.keychain.getDefaultCertificateName())
 
         self.peers_mngt = peers.PeerManagement(self)
-        # self.entities_mngt = entities.EntityManagement(self)
+        self.entities_mngt = entities.EntityManagement(self)
+
         self.peer_store = peers.PeerStore()
+        self.object_store = entities.ObjectStore(self)
 
         self.prefix_discovered = False
         self.send_prefix_discovery_interest()
@@ -70,6 +72,7 @@ class App(object):
     def start(self):
         self.carry_on = True
         self.peers_mngt.start()
+        self.entities_mngt.start()
 
     def stop(self):
         input()
