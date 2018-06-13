@@ -17,8 +17,9 @@ class GameObjectType(type):
     def __new__(cls, name, bases, namespace, **kwargs):
         if 'definition' not in namespace:
             namespace['definition'] = ()
-        for klass in bases:
-            namespace['definition'] += getattr(klass, 'definition', ())
+        if not namespace.get('override_base', False):
+            for klass in bases:
+                namespace['definition'] += getattr(klass, 'definition', ())
 
         res = super().__new__(cls, name, bases, namespace)
         _registry[res.id] = res
@@ -44,7 +45,5 @@ class GameObject(Entity, metaclass=GameObjectType):
 
     @classmethod
     def deserialize(cls, payload):
-        print(payload)
         payload, object_id = Number.deserialize(payload)
-        print(payload, object_id)
         return super(GameObject, _registry[object_id]).deserialize(payload)

@@ -9,32 +9,23 @@ class PeerManagement(object):
     def __init__(self, context):
         self.context = context
 
-        self.local_name = pyndn.Name()
-
-        self.broadcast_name = pyndn.Name(utils.broadcast_name_uri) \
-            .append(str(self.context.game_id))
-
         self.context.face.registerPrefix(
-            pyndn.Name(self.broadcast_name).append('join'),
+            pyndn.Name(self.context.broadcast_name).append('join'),
             self.on_join_interest,
             utils.on_registration_failed,
             utils.on_registration_success)
 
         self.context.face.registerPrefix(
-            pyndn.Name(self.broadcast_name).append('leave'),
+            pyndn.Name(self.context.broadcast_name).append('leave'),
             self.on_leave_interest,
             utils.on_registration_failed,
             utils.on_registration_success)
 
     def start(self):
-        self.local_name = pyndn.Name(self.context.app_name) \
-            .append(str(self.context.game_id)) \
-            .append(str(self.context.peer_id))
-
         self.context.peer_store.add(
             entities.Peer(
                 uid=self.context.peer_id,
-                prefix=self.local_name.toUri()))
+                prefix=self.context.local_name.toUri()))
 
         self.send_join_interest()
 
@@ -46,14 +37,14 @@ class PeerManagement(object):
     ################
 
     def send_join_interest(self):
-        join_name = pyndn.Name(self.broadcast_name) \
+        join_name = pyndn.Name(self.context.broadcast_name) \
             .append('join') \
-            .append(self.local_name)
+            .append(self.context.local_name)
 
         self.context.face.expressInterest(
             join_name,
             self.on_peer_info_list_data,
-            utils.on_timeout)
+            self.on_peer_info_list_timeout)
 
     def on_join_interest(self, prefix, interest, face, interest_filter_id):
         backroute = interest.getName().getSubName(5)
@@ -78,18 +69,23 @@ class PeerManagement(object):
         face.putData(peer_list_info_data)
 
     def on_peer_info_list_data(self, interest, data):
+        self.context.connected = True
         logging.debug('Got peer list')
         _, peer_array = entities.PeerArray.deserialize(
             data.getContent().toBytes())
 
         self.context.peer_store.add(*peer_array)
 
+    def on_peer_info_list_timeout(self, interest):
+        logging.info('First in game')
+        self.context.connected = True
+
     #################
     # Leave process #
     #################
 
     def send_leave_interest(self):
-        leave_name = pyndn.Name(self.broadcast_name) \
+        leave_name = pyndn.Name(self.context.broadcast_name) \
             .append('leave') \
             .append(str(self.context.peer_id))
 

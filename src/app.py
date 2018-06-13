@@ -22,6 +22,9 @@ class App(object):
         self.face.setCommandSigningInfo(
             self.keychain, self.keychain.getDefaultCertificateName())
 
+        self.broadcast_name = pyndn.Name(utils.broadcast_name_uri) \
+            .append(str(self.game_id))
+
         self.peers_mngt = peers.PeerManagement(self)
         self.entities_mngt = entities.EntityManagement(self)
 
@@ -30,6 +33,7 @@ class App(object):
 
         self.prefix_discovered = False
         self.send_prefix_discovery_interest()
+
         while not self.prefix_discovered:
             self.face.processEvents()
             time.sleep(0.01)
@@ -55,7 +59,9 @@ class App(object):
 
     def on_local_prefix_discovered(self, new_prefix):
         self.prefix_discovered = True
-        self.app_name = pyndn.Name(new_prefix)
+        self.local_name = pyndn.Name(new_prefix) \
+            .append(str(self.game_id)) \
+            .append(str(self.peer_id))
 
     #######
     # App #
@@ -63,6 +69,7 @@ class App(object):
 
     def run(self):
         self.start()
+        self.entities_mngt.load_chunk(0, 0)
         while self.carry_on:
             self.loop()
             self.carry_on = not select.select([sys.stdin, ], [], [], 0.0)[0]
@@ -71,8 +78,14 @@ class App(object):
 
     def start(self):
         self.carry_on = True
+        self.connected = False
+
         self.peers_mngt.start()
         self.entities_mngt.start()
+
+        while not self.connected:
+            self.face.processEvents()
+            time.sleep(0.01)
 
     def stop(self):
         input()

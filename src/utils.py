@@ -8,6 +8,14 @@ prefix_discovery_uri = '/localhop/nfd/rib/routable-prefixes'
 # match /chunk/<chunk x>/<chunk y>/entities
 chunk_entites_regex = '<chunk><-?[0-9]+>{2}<entities>'
 
+# match /coordinator/<entity uid>/<peer uid>
+find_coordinator_regex = '<coordinator><[0-9]+>{2}'
+
+# match /entity/<entity uid>/<peer uid>
+find_entity_regex = '<entity><[0-9]+>{2}'
+
+# match /entity_found/<entity uid>/<peer uid>
+entity_found_regex = '<entity_found><[0-9]+>{2}'
 
 def on_registration_success(prefix, registered_prefix_id):
     logging.info(

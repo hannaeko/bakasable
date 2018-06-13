@@ -1,15 +1,8 @@
-import hashlib
-
 from entities.primitives import (
     Entity,
     UID64,
     String,
-    Array,
-    Number
-)
-
-from entities.game_objects import (
-    GameObject
+    Array
 )
 
 
@@ -21,25 +14,3 @@ class Peer(Entity):
 
 
 PeerArray = Array(Peer)
-
-
-class MapChunk(Entity):
-    definition = (
-        ('uid', UID64),
-        ('data', Array(Array(Number))),
-        ('x', Number),
-        ('y', Number)
-    )
-
-    @staticmethod
-    def gen_uid(seed, x, y):
-        md5 = hashlib.md5()
-        md5.update(struct.pack('!Qii', seed, x, y))
-        return struct.unpack_from('!Q', md5.digest())[0]
-
-
-class Chunk(Entity):
-    definition = (
-        ('map', MapChunk),
-        ('entities', Array(GameObject))
-    )
