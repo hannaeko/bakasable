@@ -43,6 +43,12 @@ class EntityManagement(object):
                 self.context.broadcast_name, utils.find_coordinator_regex),
             self.on_find_coordinator_interest)
 
+        # FindEntityInterest
+        self.context.face.setInterestFilter(
+            pyndn.InterestFilter(
+                self.context.broadcast_name, utils.find_entity_regex),
+            self.on_find_entity_interest)
+
         # EntityFoundInterest
         self.context.face.setInterestFilter(
             pyndn.InterestFilter(
@@ -105,7 +111,6 @@ class EntityManagement(object):
 
         logging.debug('Received ChunkEntitiesInterest for chunk %d (%d, %d)', chunk_uid, x, y)
         if chunk is not None:
-            import pdb; pdb.set_trace()
             return self.send_chunk_entities_data(
                 interest, face, entities.Chunk(map=chunk, entities=()))
 
@@ -193,7 +198,6 @@ class EntityManagement(object):
     def send_find_coordinator_data(self, interest, face, entity):
         logging.debug('Sending FindCoordinatorData for entity %d', entity.uid)
         if isinstance(entity, entities.MapChunk):
-            # TODO: Find all entity on chunk
             entity = entities.Chunk(map=entity, entities=[])
 
         final_object = entity.serialize(entity)
