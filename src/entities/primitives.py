@@ -78,6 +78,28 @@ def Array(klass):
     return type('%sArray' % klass.__name__, (_Array,), {'my_type': klass})
 
 
+class _Option:
+    my_type = None
+
+    @classmethod
+    def deserialize(cls, payload):
+        if payload[0] == 0x00:
+            return payload[1:], None
+        else:
+            return cls.my_type.deserialize(payload[1:])
+
+    @classmethod
+    def serialize(cls, my_option):
+        if my_option is None:
+            return b'\x00'
+        else:
+            return b'\x01' + cls.my_type.serialize(my_option)
+
+
+def Option(klass):
+    return type('OptionOf%s' % klass.__name__, (_Option,), {'my_type': klass})
+
+
 class Entity:
     """
     Composition of Entity or primitives.
