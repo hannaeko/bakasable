@@ -2,8 +2,11 @@ from entities.primitives import (
     Entity,
     UID64,
     String,
+    Number,
+    Option,
     Array
 )
+from entities.game_base import GameObject
 
 
 class Peer(Entity):
@@ -14,3 +17,10 @@ class Peer(Entity):
 
 
 PeerArray = Array(Peer)
+
+
+class Result(Entity):
+    definition = (
+        ('status', Number),
+        ('value', Option(GameObject))
+    )

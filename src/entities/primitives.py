@@ -79,6 +79,10 @@ def Array(klass):
 
 
 class _Option:
+    """
+    Optional type.
+    Should not be used directly, call Option(MyClass) instead.
+    """
     my_type = None
 
     @classmethod
@@ -93,10 +97,20 @@ class _Option:
         if my_option is None:
             return b'\x00'
         else:
-            return b'\x01' + cls.my_type.serialize(my_option)
+            if hasattr(my_option, 'deserialize'):
+                return b'\x01' + my_option.serialize(my_option)
+            else:
+                return b'\x01' + cls.my_type.serialize(my_option)
 
 
 def Option(klass):
+    """
+    The value of an Option field can be either an object or None.
+    The class passed in argument will be used for serialization and
+    deserialization of non None value.
+    If the value has a method 'deserialize', it will be used instead of the
+    one of the given class.
+    """
     return type('OptionOf%s' % klass.__name__, (_Option,), {'my_type': klass})
 
 
