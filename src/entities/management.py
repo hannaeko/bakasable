@@ -6,6 +6,7 @@ import functools
 
 import pyndn
 
+import const.status_code
 import utils
 import events
 import peers
@@ -54,6 +55,12 @@ class EntityManagement(object):
             pyndn.InterestFilter(
                 self.context.local_name, utils.entity_found_regex),
             self.on_entity_found_interest)
+
+        # FetchEntityInterest
+        self.context.face.setInterestFilter(
+            pyndn.InterestFilter(
+                self.context.local_name, utils.entity_fetch_regex),
+            self.on_fetch_entity_interest)
 
     def get_peer_uid_tuple(self, interest):
         peer_id = int(interest.getName().get(-1).toEscapedString())
@@ -147,7 +154,7 @@ class EntityManagement(object):
             return entities.Chunk(map=chunk, entities=())
 
         chunk = logic.chunk.generate_chunk(self.context.game_id, x, y)
-        self.context.object_store.add(chunk, coordinator=True)
+        self.context.object_store.add(chunk)
         logging.debug('Created chunk %s', chunk)
         # TODO: assign entities to peers.
         return chunk
@@ -192,6 +199,9 @@ class EntityManagement(object):
         if not self.context.object_store.is_local_coordinator(uid):
             return
         entity = self.context.object_store.get(uid)
+
+        # TODO: End pending update interests with CoordinatorChangedData
+
         self.context.object_store.set_local_coordinator(uid, False)
         self.send_find_coordinator_data(interest, face, entity)
 
@@ -261,7 +271,10 @@ class EntityManagement(object):
                 failed_cb()
         else:
             logging.debug('Entity %d found at peers %s', uid, recorvery_obj['peers'])
-            # TODO: Fetch entity
+
+            # TODO: Arbitrary choice, to be replaced by latest version choice
+            peer = self.context.peer_store.get(recorvery_obj['peers'][0])
+            self.send_fetch_entity_interest(peer, uid)
 
     # EntityFoundInterest
 
@@ -280,3 +293,71 @@ class EntityManagement(object):
         logging.debug('Entity %d found at peer %d', uid, peer_id)
         if uid in self.recorvering_registry:
             self.recorvering_registry[uid]['peers'].append(peer_id)
+
+    ####################
+    # Entity retrieval #
+    ####################
+
+    def load_entity(self, uid):
+        peer = self.conext.peer_store.get_closest_peer(uid)
+        logging.info('Loading entity %d from peer %d', uid, peer.uid)
+        self.send_fetch_entity_interest(peer, uid)
+
+    def send_fetch_entity_interest(self, peer, uid):
+        logging.debug('Sending FetchEntityInterest for entity %d to peer %d', uid, peer.uid)
+        name = pyndn.Name(peer.prefix) \
+            .append('entity') \
+            .append(str(uid)) \
+            .append('fetch')
+
+        self.context.face.expressInterest(
+            name,
+            self.on_fetch_entity_data,
+            utils.on_timeout)
+
+    def on_fetch_entity_interest(self, prefix, interest, face, interest_filter_id):
+        uid = int(interest.getName().get(-2).toEscapedString())
+        logging.debug('Received FetchEntityInterest for entity %d', uid)
+
+        entity = self.context.object_store.get(uid)
+        if entity is not None:
+            return self.send_fetch_entity_data(interest, face, entity)
+        self.start_recorvery(
+            uid,
+            success_cb=functools.partial(self.send_fetch_entity_data, interest, face, uid),
+            failed_cb=funself.send_deleted_entity_data)
+
+    def send_fetch_entity_data(self, interest, face, entity_or_uid):
+        if isinstance(entity_or_uid, int):
+            entity = self.context.object_store.get(entity_or_uid)
+        else:
+            entity = entity_or_uid
+
+        logging.debug('Sending FetchEntityData for entity %d', entity.uid)
+
+        result = entities.Result(status=const.status_code.OK, value=entity)
+
+        fetch_entity_data = pyndn.Data(interest.getName())
+        fetch_entity_data.setContent(entities.Result.serialize(result))
+        face.putData(fetch_entity_data)
+
+    def send_deleted_entity_data(self, interest, face):
+        logging.debug('Sending DeletedEntityData for interest %s', interest.getName().toUri())
+
+        result = entities.Result(
+            status=const.status_code.DELETED_ENTITY, value=None)
+        deleted_entity_data = pyndn.Data(interest.getName())
+        deleted_entity_data.setContent(entities.Result.serialize(result))
+
+        face.putData(deleted_entity_data)
+
+    def on_fetch_entity_data(self, interest, data):
+        uid = int(interest.getName().get(-2).toEscapedString())
+        _, result = entities.Result.deserialize(data.getContent().toBytes())
+
+        logging.debug('Received FetchEntityData for entity %d (status=%d)', uid, result.status)
+
+        if result.status == const.status_code.DELETED_ENTITY:
+            self.context.object_store.remove(uid)
+        elif result.status == const.status_code.OK:
+            self.context.object_store.add(result.value)

@@ -17,6 +17,10 @@ find_entity_regex = '<entity><[0-9]+>{2}'
 # match /entity_found/<entity uid>/<peer uid>
 entity_found_regex = '<entity_found><[0-9]+>{2}'
 
+# match /entity/<entity uid>/fetch
+entity_fetch_regex = '<entity><[0-9]+><fetch>'
+
+
 def on_registration_success(prefix, registered_prefix_id):
     logging.info(
         'Registered prefix %s under id %d' % (
