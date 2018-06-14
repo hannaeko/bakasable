@@ -68,10 +68,12 @@ class _Array(list):
 
     @classmethod
     def serialize(cls, my_list):
-        res = struct.pack('!I', len(my_list))
+        res = b''
+        my_len = 0
         for element in my_list:
             res += cls.my_type.serialize(element)
-        return res
+            my_len += 1
+        return struct.pack('!I', my_len) + res
 
 
 def Array(klass):
