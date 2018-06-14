@@ -19,23 +19,80 @@ GameId = UID64
 PeerId = UID64
 \end{lstlisting}
 
-\paragraph{Compounds}
-~
-\begin{lstlisting}
-Entity = 1*(Primitives)
-ArrayOfEntity := Length Length(Entity)
+\paragraph{Compounds} Compounds structure agrated primitives together. The two main are \verb+Entity+ and \verb+ArrayOf+$\bigstar$.
 
-GameObjectId = Integer
-GameObject = GameObjectId Entity
+~
+
+The first is a group of primitives and is used as a base for every complex objects.
+
+The second represent a general structure to create fixed-length array. It is construct by the length of the array followed by that amount of \verb+Entity+.
+
+The \verb+OptionOf+$\bigstar$ structure at last permit the absence of value. A boolean will first indicate if a value follows followed by the optionnal value.
+
+\begin{lstlisting}[escapechar=\%]
+Entity = 1*(Primitives)
+
+ArrayOf%$\bigstar$% := Length Length(%$\bigstar$%)
+OptionOf%$\bigstar$% := "0" | "1" %$\bigstar$%
 \end{lstlisting}
 
 \subsubsection{Peers}
 
 \begin{lstlisting}
 Peer = PeerId String
-ArrayOfPeer = Length Length(Peer)
+ArrayOfPeer
 \end{lstlisting}
+
+
 \subsubsection{Game}
+The base types of game object are \verb+GameObject+ one of those is composed of
+the \verb+GameObjectId+, that is the unique id of the type, followed by the
+definition of the \verb+Entity+.
+
+~
+
+We count currently three types of \verb+GameObject+, the \verb+MapChunk+, the
+\verb+Chunk+ and the \verb+Sheep+.
+
+~
+
+The \verb+MapChunk+ represent a section of terrain of 15 blocks by 15 blocks. The \verb+MapChunk+ is composed of its unique id, coordinates and blocks data. In opposition to most of UID, the \verb+MapChunk+ UID is not random as it should be predictable to allow peers to load start a fetch process for the chunk.
+
+Another particularity of that \verb+GameObject+ is the coordinate system. The \verb+MapChunk+ is index over \textit{chunk coordinated} that are equal to the world coordinate divided by the length of a chunk edge (15). Therefore the chunk $(1,1)$ represent the chunk that goes from $(15, 15)$ to $(29,29)$ (include).
+
+~
+
+The \verb+Chunk+ is used to aggregate a \verb+MapChunk+ with the entities present on this chunk. It has no real use other than being a container for transfert over the network. It still has a UID to keep the consistency among \verb+GameObject+s but as it is currently only used for debugging that id can be safely set to the id of the \verb+ChunkMap+.
+
+\begin{lstlisting}
+GameObjectId = Integer
+GameObject = GameObjectId Entity
+
+MapChunk = "1" UID64 Integer Integer ArrayOfArrayOfNumber
+Chunk = "2" UID64 MapChunk ArrayOfGameObject
+Sheep = "3" UID64 Interger Interger String
+\end{lstlisting}
+
+\subsubsection{Network}
+
+Network data structure are only used to transfer information over the network. It can embed other data structure or just an action.
+
+~
+
+The \verb+Result+ structure is used when retrieving objects via the fetch process. The first component is the status code followed by an optional \verb+GameObject+ if the result is successful.
+
+~
+
+The list of status code is the following:
+\begin{itemize}
+  \item 100, \verb+OK+, the request is successful, the object has been fetched and follows;
+  \item 201, \verb+DELETED_ENTITY+, the requested object could not be retrieved because it has been deleted.
+\end{itemize}
+
+\begin{lstlisting}
+Result = Status OptionOfGameObject
+Status = Integer
+\end{lstlisting}
 
 \subsection{Interest names}
 
@@ -45,4 +102,11 @@ LocalRoute := <>+<"mygame"><GameId><PeerId>
 
 JoinInterest := <Broadcast><"join"><LocalRoute>
 LeaveInterest := <Broadcast><"leave"><PeerId>
+
+ChunkEntitiesInterest := <LocalRoute><"chunk"><Integer><Integer><"entities">
+FetchEntityInterest := <LocalRoute><"entity"><UID64><"fetch">
+
+FindCoordinatorInterest := <Broadcast><"coordinator"><UID64><PeerId>
+FindEntityInterest := <Broadcast><"entity"><UID64><PeerId>
+EntityFoundInterest := <LocalRoute><"entity_found"><UID64><PeerId>
 \end{lstlisting}
