@@ -13,6 +13,9 @@ import entities
 import logic.chunk
 
 
+logger = logging.getLogger(__name__)
+
+
 class EntityManagement(object):
     def __init__(self, context):
         self.context = context
@@ -81,7 +84,7 @@ class EntityManagement(object):
             self.context.game_id, x, y)
         chunk_peer = self.context.peer_store.get_closest_peer(chunk_uid)
 
-        logging.info('Loading chunk %d (%d, %d) from peer %d', chunk_uid, x, y, chunk_peer.uid)
+        logger.info('Loading chunk %d (%d, %d) from peer %d', chunk_uid, x, y, chunk_peer.uid)
         if chunk_peer.uid == self.context.peer_id:
             self.start_recorvery(
                 chunk_uid,
@@ -95,7 +98,7 @@ class EntityManagement(object):
             .append('chunk') \
             .append(str(x)).append(str(y)) \
             .append('entities')
-        logging.debug('Sending ChunkEntitiesInterest to %s', name.toUri())
+        logger.debug('Sending ChunkEntitiesInterest to %s', name.toUri())
         interest = pyndn.Interest(name)
         # About three times a normal timeout as two timeout may occur before
         # the chunk is created.
@@ -119,7 +122,7 @@ class EntityManagement(object):
             self.context.game_id, x, y)
         chunk = self.context.object_store.get(chunk_uid)
 
-        logging.debug('Received ChunkEntitiesInterest for chunk %d (%d, %d)', chunk_uid, x, y)
+        logger.debug('Received ChunkEntitiesInterest for chunk %d (%d, %d)', chunk_uid, x, y)
         if chunk is not None:
             return self.send_chunk_entities_data(
                 interest, face, entities.Chunk(map=chunk, entities=()))
@@ -131,7 +134,7 @@ class EntityManagement(object):
             success_cb=cb)  # Success : fetch in store then send
 
     def send_chunk_entities_data(self, interest, face, chunk):
-        logging.debug('Sending ChunkEntitiesData for chunk %d (%d, %d)', chunk.map.uid, chunk.map.x, chunk.map.y)
+        logger.debug('Sending ChunkEntitiesData for chunk %d (%d, %d)', chunk.map.uid, chunk.map.x, chunk.map.y)
         chunk = entities.Chunk.serialize(chunk)
 
         chunk_data = pyndn.Data(interest.getName())
@@ -140,7 +143,7 @@ class EntityManagement(object):
 
     def on_chunk_entities_data(self, interest, data):
         _, chunk = entities.Chunk.deserialize(data.getContent().toBytes())
-        logging.debug('Received ChunkEntitiesData for chunk %d (%d, %d)', chunk.map.uid, chunk.map.x, chunk.map.y)
+        logger.debug('Received ChunkEntitiesData for chunk %d (%d, %d)', chunk.map.uid, chunk.map.x, chunk.map.y)
         self.context.object_store.add(chunk)
 
     def send_chunk_or_create(self, interest, face, x, y):
@@ -158,7 +161,7 @@ class EntityManagement(object):
 
         chunk = logic.chunk.generate_chunk(self.context.game_id, x, y)
         self.context.object_store.add(chunk)
-        logging.debug('Created chunk %s', chunk)
+        logger.debug('Created chunk %s', chunk)
         # TODO: assign entities to peers.
         return chunk
 
@@ -167,7 +170,7 @@ class EntityManagement(object):
     #############
 
     def start_recorvery(self, uid, success_cb=None, failed_cb=None):
-        logging.debug('Starting recorvery for entity %d', uid)
+        logger.debug('Starting recorvery for entity %d', uid)
         if uid not in self.recorvering_registry:
             self.recorvering_registry[uid] = {
                 'success': [],
@@ -189,7 +192,7 @@ class EntityManagement(object):
             .append('coordinator') \
             .append(str(uid)) \
             .append(str(self.context.peer_id))
-        logging.debug('Sending FindCoordinatorInterest to %s', name.toUri())
+        logger.debug('Sending FindCoordinatorInterest to %s', name.toUri())
         self.context.face.expressInterest(
             name,
             self.on_find_coordinator_data,
@@ -197,7 +200,7 @@ class EntityManagement(object):
 
     def on_find_coordinator_interest(self, prefix, interest, face, interest_filter_id):
         peer_id, uid = self.get_peer_uid_tuple(interest)
-        logging.debug('Received FindCoordinatorInterest for entity %d from peer %d', uid, peer_id)
+        logger.debug('Received FindCoordinatorInterest for entity %d from peer %d', uid, peer_id)
 
         if not self.context.object_store.is_local_coordinator(uid):
             return
@@ -209,7 +212,7 @@ class EntityManagement(object):
         self.send_find_coordinator_data(interest, face, entity)
 
     def send_find_coordinator_data(self, interest, face, entity):
-        logging.debug('Sending FindCoordinatorData for entity %d', entity.uid)
+        logger.debug('Sending FindCoordinatorData for entity %d', entity.uid)
         if isinstance(entity, entities.MapChunk):
             entity = entities.Chunk(map=entity, entities=[])
 
@@ -224,7 +227,7 @@ class EntityManagement(object):
         self.context.object_store.add(entity)
 
         peer_id, uid = self.get_peer_uid_tuple(interest)
-        logging.debug('Successfuly found coordinator for entity %d', uid)
+        logger.debug('Successfuly found coordinator for entity %d', uid)
 
         recorvery_obj = self.recorvering_registry[uid]
         del self.recorvering_registry[uid]
@@ -235,13 +238,13 @@ class EntityManagement(object):
     def on_find_coordinator_timeout(self, interest):
         peer_id, uid = self.get_peer_uid_tuple(interest)
 
-        logging.debug('Failed to find coordinator for entity %d', uid)
+        logger.debug('Failed to find coordinator for entity %d', uid)
         self.send_find_entity_interest(uid)
 
     # FindEntityInterest
 
     def send_find_entity_interest(self, uid):
-        logging.debug('Sending FindEntityInterest for entity %d', uid)
+        logger.debug('Sending FindEntityInterest for entity %d', uid)
         name = pyndn.Name(self.context.broadcast_name) \
             .append('entity') \
             .append(str(uid)) \
@@ -253,7 +256,7 @@ class EntityManagement(object):
 
     def on_find_entity_interest(self, prefix, interest, face, interest_filter_id):
         peer_id, uid = self.get_peer_uid_tuple(interest)
-        logging.debug('Received FindEntityInterest for entity %d from peer %d', uid, peer_id)
+        logger.debug('Received FindEntityInterest for entity %d from peer %d', uid, peer_id)
         peer = self.context.peer_store.get(peer_id)
 
         if self.context.object_store.get(uid) is not None:
@@ -269,11 +272,11 @@ class EntityManagement(object):
         del self.recorvering_registry[uid]
 
         if not recorvery_obj['peers']:
-            logging.debug('Fail to found entity %d', uid)
+            logger.debug('Fail to found entity %d', uid)
             for failed_cb in recorvery_obj['failed']:
                 failed_cb()
         else:
-            logging.debug('Entity %d found at peers %s', uid, recorvery_obj['peers'])
+            logger.debug('Entity %d found at peers %s', uid, recorvery_obj['peers'])
 
             # TODO: Arbitrary choice, to be replaced by latest version choice
             peer = self.context.peer_store.get(recorvery_obj['peers'][0])
@@ -282,7 +285,7 @@ class EntityManagement(object):
     # EntityFoundInterest
 
     def send_entity_found_interest(self, peer, uid):
-        logging.debug('Sending EntityFoundInterest for entity %d to peer %d', uid, peer.uid)
+        logger.debug('Sending EntityFoundInterest for entity %d to peer %d', uid, peer.uid)
         name = pyndn.Name(peer.prefix) \
             .append('entity_found') \
             .append(str(uid)) \
@@ -293,7 +296,7 @@ class EntityManagement(object):
 
     def on_entity_found_interest(self, prefix, interest, face, interest_filter_id):
         peer_id, uid = self.get_peer_uid_tuple(interest)
-        logging.debug('Entity %d found at peer %d', uid, peer_id)
+        logger.debug('Entity %d found at peer %d', uid, peer_id)
         if uid in self.recorvering_registry:
             self.recorvering_registry[uid]['peers'].append(peer_id)
 
@@ -303,11 +306,11 @@ class EntityManagement(object):
 
     def load_entity(self, uid):
         peer = self.conext.peer_store.get_closest_peer(uid)
-        logging.info('Loading entity %d from peer %d', uid, peer.uid)
+        logger.info('Loading entity %d from peer %d', uid, peer.uid)
         self.send_fetch_entity_interest(peer, uid)
 
     def send_fetch_entity_interest(self, peer, uid):
-        logging.debug('Sending FetchEntityInterest for entity %d to peer %d', uid, peer.uid)
+        logger.debug('Sending FetchEntityInterest for entity %d to peer %d', uid, peer.uid)
         name = pyndn.Name(peer.prefix) \
             .append('entity') \
             .append(str(uid)) \
@@ -323,7 +326,7 @@ class EntityManagement(object):
 
     def on_fetch_entity_interest(self, prefix, interest, face, interest_filter_id):
         uid = int(interest.getName().get(-2).toEscapedString())
-        logging.debug('Received FetchEntityInterest for entity %d', uid)
+        logger.debug('Received FetchEntityInterest for entity %d', uid)
 
         entity = self.context.object_store.get(uid)
         if entity is not None:
@@ -339,7 +342,7 @@ class EntityManagement(object):
         else:
             entity = entity_or_uid
 
-        logging.debug('Sending FetchEntityData for entity %d', entity.uid)
+        logger.debug('Sending FetchEntityData for entity %d', entity.uid)
 
         result = entities.Result(status=const.status_code.OK, value=entity)
 
@@ -348,7 +351,7 @@ class EntityManagement(object):
         face.putData(fetch_entity_data)
 
     def send_deleted_entity_data(self, interest, face):
-        logging.debug('Sending DeletedEntityData for interest %s', interest.getName().toUri())
+        logger.debug('Sending DeletedEntityData for interest %s', interest.getName().toUri())
 
         result = entities.Result(
             status=const.status_code.DELETED_ENTITY, value=None)
@@ -361,7 +364,7 @@ class EntityManagement(object):
         uid = int(interest.getName().get(-2).toEscapedString())
         _, result = entities.Result.deserialize(data.getContent().toBytes())
 
-        logging.debug('Received FetchEntityData for entity %d (status=%d)', uid, result.status)
+        logger.debug('Received FetchEntityData for entity %d (status=%d)', uid, result.status)
 
         if result.status == const.status_code.DELETED_ENTITY:
             self.context.object_store.remove(uid)

@@ -1,8 +1,12 @@
 import random
 import logging
 import sys
+import argparse
 
 import app
+
+
+logger = logging.getLogger(__name__)
 
 
 def input_default(prompt, default):
@@ -13,17 +17,41 @@ def input_default(prompt, default):
 
 
 def main():
-    logging.getLogger().setLevel(logging.DEBUG)
-    # NOTE: Temporary code before implementing real arguments parsing
-    """
-    pseudo = input_default('pseudo', 'toto')
-    game_id = input_default('game_id', random.getrandbits(64))
-    peer_id = input_default('peer_id', random.getrandbits(64))
-    """
-    _, game_id, peer_id = sys.argv
-    logging.info('Starting app with game_id=%s and peer_id=%s', game_id, peer_id)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s#%(lineno)d - %(message)s')
+    ch.setFormatter(formatter)
+    root_logger.addHandler(ch)
 
-    my_app = app.App(int(game_id), 'toto', int(peer_id))
+    parser = argparse.ArgumentParser(
+        prog='bakasable',
+        description=' Peer to peer multiplayer sandbox game based on NDN.')
+
+    parser.add_argument(
+        '--game', '-g',
+        metavar='<game_id>',
+        help='Set the game id to connect to.',
+        default=random.getrandbits(64),
+        type=int)
+
+    parser.add_argument(
+        '--peer', '-p',
+        metavar='<peer_id>',
+        help='Set the peer id.',
+        default=random.getrandbits(64),
+        type=int)
+
+    parser.add_argument(
+        '--pseudo', '-P',
+        metavar='<pseudo>',
+        help='Set player pseudo.',
+        default='toto')
+
+    args = parser.parse_args()
+
+    logger.info('Starting app with game_id=%s and peer_id=%s', args.game, args.peer)
+    my_app = app.App(args.game, args.pseudo, args.peer)
     my_app.run()
 
 
