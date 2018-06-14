@@ -13,7 +13,7 @@ from entities.game_base import GameObject
 class MapChunk(GameObject):
     id = 1
     definition = (
-        ('data', Array(Array(Number)))
+        ('data', Array(Array(Number))),
     )
 
     @staticmethod

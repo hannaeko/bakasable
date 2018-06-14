@@ -8,7 +8,6 @@ import pyndn
 
 import const.status_code
 import utils
-import events
 import peers
 import entities
 import logic.chunk
