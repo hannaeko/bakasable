@@ -1,8 +1,10 @@
 import logging
 import pyndn
 
-import utils
-import entities
+from bakasable import (
+    utils,
+    entities
+)
 
 
 logger = logging.getLogger(__name__)

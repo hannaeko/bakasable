@@ -1,5 +1,6 @@
 from sortedcontainers import SortedDict
-import entities
+
+from bakasable import entities
 
 
 class PeerStore(SortedDict):

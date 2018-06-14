@@ -5,9 +5,12 @@ import sys
 import pyndn
 import pyndn.security
 
-import peers
-import entities
-import utils
+from bakasable import (
+    utils,
+    peers,
+    entities,
+    utils
+)
 
 
 class App(object):

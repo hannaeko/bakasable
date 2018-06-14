@@ -1,13 +1,13 @@
 import struct
 import hashlib
 
-from entities.primitives import (
+from bakasable.entities.primitives import (
     String,
     UID64,
     Number,
     Array
 )
-from entities.game_base import GameObject
+from bakasable.entities.game_base import GameObject
 
 
 class MapChunk(GameObject):

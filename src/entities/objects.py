@@ -1,4 +1,4 @@
-from entities.primitives import (
+from bakasable.entities.primitives import (
     Entity,
     UID64,
     String,
@@ -6,7 +6,7 @@ from entities.primitives import (
     Option,
     Array
 )
-from entities.game_base import GameObject
+from bakasable.entities.game_base import GameObject
 
 
 class Peer(Entity):

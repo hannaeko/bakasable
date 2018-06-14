@@ -1,7 +1,7 @@
 import collections
 import logging
 
-import entities
+from bakasable import entities
 
 
 logger = logging.getLogger(__name__)

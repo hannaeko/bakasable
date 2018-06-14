@@ -1,4 +1,4 @@
-from entities.primitives import (
+from bakasable.entities.primitives import (
     String,
     Number,
     Entity,

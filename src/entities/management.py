@@ -6,11 +6,13 @@ import functools
 
 import pyndn
 
-import const.status_code
-import utils
-import peers
-import entities
-import logic.chunk
+from bakasable import (
+    utils,
+    peers,
+    entities,
+)
+import bakasable.logic.chunk
+import bakasable.const.status_code
 
 
 logger = logging.getLogger(__name__)
@@ -159,7 +161,7 @@ class EntityManagement(object):
         if chunk is not None:
             return entities.Chunk(map=chunk, entities=())
 
-        chunk = logic.chunk.generate_chunk(self.context.game_id, x, y)
+        chunk = bakasable.logic.chunk.generate_chunk(self.context.game_id, x, y)
         self.context.object_store.add(chunk)
         logger.debug('Created chunk %s', chunk)
         # TODO: assign entities to peers.
@@ -344,7 +346,8 @@ class EntityManagement(object):
 
         logger.debug('Sending FetchEntityData for entity %d', entity.uid)
 
-        result = entities.Result(status=const.status_code.OK, value=entity)
+        result = entities.Result(
+            status=bakasable.const.status_code.OK, value=entity)
 
         fetch_entity_data = pyndn.Data(interest.getName())
         fetch_entity_data.setContent(entities.Result.serialize(result))
@@ -354,7 +357,7 @@ class EntityManagement(object):
         logger.debug('Sending DeletedEntityData for interest %s', interest.getName().toUri())
 
         result = entities.Result(
-            status=const.status_code.DELETED_ENTITY, value=None)
+            status=bakasable.const.status_code.DELETED_ENTITY, value=None)
         deleted_entity_data = pyndn.Data(interest.getName())
         deleted_entity_data.setContent(entities.Result.serialize(result))
 
@@ -366,7 +369,7 @@ class EntityManagement(object):
 
         logger.debug('Received FetchEntityData for entity %d (status=%d)', uid, result.status)
 
-        if result.status == const.status_code.DELETED_ENTITY:
+        if result.status == bakasable.const.status_code.DELETED_ENTITY:
             self.context.object_store.remove(uid)
-        elif result.status == const.status_code.OK:
+        elif result.status == bakasable.const.status_code.OK:
             self.context.object_store.add(result.value)

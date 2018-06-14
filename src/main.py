@@ -3,7 +3,7 @@ import logging
 import sys
 import argparse
 
-import app
+import bakasable
 
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ def main():
     args = parser.parse_args()
 
     logger.info('Starting app with game_id=%s and peer_id=%s', args.game, args.peer)
-    my_app = app.App(args.game, args.pseudo, args.peer)
+    my_app = bakasable.App(args.game, args.pseudo, args.peer)
     my_app.run()
 
 
