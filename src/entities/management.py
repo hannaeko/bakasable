@@ -97,8 +97,12 @@ class EntityManagement(object):
             .append(str(x)).append(str(y)) \
             .append('entities')
         logging.debug('Sending ChunkEntitiesInterest to %s', name.toUri())
+        interest = pyndn.Interest(name)
+        # About three times a normal timeout as two timeout may occur before
+        # the chunk is created.
+        interest.setInterestLifetimeMilliseconds(30000)
         self.context.face.expressInterest(
-            name,
+            interest,
             self.on_chunk_entities_data,
             utils.on_timeout)
 
@@ -309,9 +313,12 @@ class EntityManagement(object):
             .append('entity') \
             .append(str(uid)) \
             .append('fetch')
-
+        interest = pyndn.Interest(name)
+        # About three times a normal timeout as two timeout may occur before
+        # the chunk is created.
+        interest.setInterestLifetimeMilliseconds(30000)
         self.context.face.expressInterest(
-            name,
+            interest,
             self.on_fetch_entity_data,
             utils.on_timeout)
 
