@@ -12,12 +12,8 @@ from entities.game_base import GameObject
 
 class MapChunk(GameObject):
     id = 1
-    override_base = True
     definition = (
-        ('uid', UID64),
-        ('data', Array(Array(Number))),
-        ('x', Number),
-        ('y', Number)
+        ('data', Array(Array(Number)))
     )
 
     @staticmethod
@@ -31,9 +27,19 @@ class Chunk(GameObject):
     id = 2
     override_base = True
     definition = (
+        ('uid', UID64),  # For consistency and logging, same as map.uid
         ('map', MapChunk),
         ('entities', Array(GameObject))
     )
+
+    @property
+    def uid(self):
+        if self.map is not None:
+            return self.map.uid
+
+    @uid.setter
+    def uid(self, value):
+        pass
 
 
 class Sheep(GameObject):

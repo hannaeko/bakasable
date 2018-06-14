@@ -32,13 +32,27 @@ class ObjectStore():
             self.coordinated.remove(uid)
             logging.debug('Removed %d from coordinated entities', uid)
 
-    def get(self, uid):
-        return self.store.get(uid, None)
+    def get(self, uid, expend_chunk=True):
+        entity = self.store.get(uid, None)
+        if expend_chunk and isinstance(entity, entities.MapChunk):
+            return entities.Chunk(
+                map=entity,
+                entities=self.get_entities_in_chunk(entity.x, entity.y))
+        return entity
 
-    def get_chunk(self, x, y):
+    def get_chunk(self, chunk_x, chunk_y):
         chunk_uid = entities.MapChunk.gen_uid(
-            self.context.game_id, x, y)
+            self.context.game_id, chunk_x, chunk_y)
         return self.get(chunk_uid)
+
+    def get_entities_in_chunk(self, chunk_x, chunk_y):
+        x, y = 15 * chunk_x, 15 * chunk_y
+        x_max, y_max = x + 15, y + 15
+        for entity in self.store.values():
+            if not isinstance(entity, entities.MapChunk) and \
+                entity.x >= x and entity.y >= y and \
+                    entity.x <= x_max and entity.y <= y_max:
+                yield entity
 
     def is_local_coordinator(self, uid):
         return uid in self.coordinated
