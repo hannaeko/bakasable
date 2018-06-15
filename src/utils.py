@@ -1,4 +1,5 @@
 import logging
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,9 @@ entity_found_regex = '<entity_found><[0-9]+>{2}'
 
 # match /entity/<entity uid>/fetch
 entity_fetch_regex = '<entity><[0-9]+><fetch>'
+
+module_path = os.path.abspath(os.path.dirname(__file__))
+asset_path = os.path.join(module_path, 'assets')
 
 
 def on_registration_success(prefix, registered_prefix_id):

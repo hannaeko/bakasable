@@ -4,12 +4,13 @@ import sys
 
 import pyndn
 import pyndn.security
+import pygame
 
 from bakasable import (
     utils,
     peers,
     entities,
-    utils
+    game
 )
 
 
@@ -33,6 +34,9 @@ class App(object):
 
         self.peer_store = peers.PeerStore()
         self.object_store = entities.ObjectStore(self)
+
+        self.clock = pygame.time.Clock()
+        self.game = game.Game(self)
 
         self.prefix_discovered = False
         self.send_prefix_discovery_interest()
@@ -76,7 +80,7 @@ class App(object):
         while self.carry_on:
             self.loop()
             self.carry_on = not select.select([sys.stdin, ], [], [], 0.0)[0]
-            time.sleep(0.01)
+            self.clock.tick(60)
         self.stop()
 
     def start(self):
@@ -97,3 +101,4 @@ class App(object):
 
     def loop(self):
         self.face.processEvents()
+        self.game.loop()

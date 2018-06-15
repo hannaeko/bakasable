@@ -4,6 +4,8 @@ from bakasable.entities.primitives import (
     Entity,
     UID64
 )
+from bakasable.utils import asset_path
+
 
 _registry = {}
 
@@ -38,6 +40,14 @@ class GameObject(Entity, metaclass=GameObjectType):
         ('y', Number),
         ('uid', UID64)
     )
+    sprite = None
+    animated = False
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not self.animated and self.sprite is not None:
+            self.sprite = pygame.image.load(
+                os.join(asset_path, '%s.png' % self.sprite))
 
     @classmethod
     def serialize(cls, object):
@@ -47,3 +57,7 @@ class GameObject(Entity, metaclass=GameObjectType):
     def deserialize(cls, payload):
         payload, object_id = Number.deserialize(payload)
         return super(GameObject, _registry[object_id]).deserialize(payload)
+
+    def get_sprite(self):
+        if not self.animated:
+            return self.sprite

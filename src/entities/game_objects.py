@@ -1,6 +1,9 @@
 import struct
 import hashlib
 
+import numpy as np
+import pygame
+
 from bakasable.entities.primitives import (
     String,
     UID64,
@@ -8,6 +11,7 @@ from bakasable.entities.primitives import (
     Array
 )
 from bakasable.entities.game_base import GameObject
+from bakasable.const import terrain
 
 
 class MapChunk(GameObject):
@@ -15,6 +19,15 @@ class MapChunk(GameObject):
     definition = (
         ('data', Array(Array(Number))),
     )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        col_map = pygame.Surface((15, 15))
+        pix = [[terrain.mapping[tile_code] for tile_code in line]
+               for line in self.data]
+
+        pygame.surfarray.blit_array(col_map, np.array(pix))
+        self.sprite = pygame.transform.scale(col_map, (15*32, 15*32))
 
     @staticmethod
     def gen_uid(seed, x, y):
