@@ -40,3 +40,16 @@ def generate_chunk(seed, x, y):
     return entities.Chunk(
         map=generate_chunk_map(seed, x, y),
         entities=generate_chunk_entities(seed, x, y))
+
+
+def get_chunk_range(top_left_x, top_left_y, bottom_right_x, bottom_right_y):
+    chunks = set()
+    x_range = range((top_left_x) // 15,
+                    (bottom_right_x) // 15 + 1)
+    y_range = range((top_left_y) // 15,
+                    (bottom_right_y) // 15 + 1)
+
+    for chunk_x in x_range:
+        for chunk_y in y_range:
+            chunks.add((chunk_x, chunk_y))
+    return chunks

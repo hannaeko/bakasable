@@ -12,6 +12,7 @@ from bakasable.entities.primitives import (
 )
 from bakasable.entities.game_base import GameObject
 from bakasable.const import terrain
+from bakasable.const import TILE_SIZE
 
 
 class MapChunk(GameObject):
@@ -27,7 +28,8 @@ class MapChunk(GameObject):
                for line in self.data]
 
         pygame.surfarray.blit_array(col_map, np.array(pix))
-        self.sprite = pygame.transform.scale(col_map, (15*32, 15*32))
+        self.sprite = pygame.transform.scale(col_map,
+                                             (15*TILE_SIZE, 15*TILE_SIZE))
 
     @staticmethod
     def gen_uid(seed, x, y):
