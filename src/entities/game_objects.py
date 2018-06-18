@@ -70,4 +70,5 @@ class Player(GameObject):
         ('pseudo', String),
     )
     sprite = 'player'
+    animated = True
     interest_zone = 14

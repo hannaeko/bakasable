@@ -1,13 +1,14 @@
 import pygame
 import os
 
+from bakasable import game
+from bakasable.utils import asset_path
 from bakasable.entities.primitives import (
     String,
     Number,
     Entity,
     UID64
 )
-from bakasable.utils import asset_path
 
 
 _registry = {}
@@ -49,9 +50,8 @@ class GameObject(Entity, metaclass=GameObjectType):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if not self.animated and self.sprite is not None:
-            self.sprite = pygame.image.load(
-                os.path.join(asset_path, '%s.png' % self.sprite))
+        if self.sprite:
+            self._sprite = game.Sprite(self.sprite, self.animated)
 
     @classmethod
     def serialize(cls, object):
@@ -63,5 +63,5 @@ class GameObject(Entity, metaclass=GameObjectType):
         return super(GameObject, _registry[object_id]).deserialize(payload)
 
     def get_sprite(self):
-        if not self.animated:
-            return self.sprite
+        if self.sprite:
+            return self._sprite.current_frame
