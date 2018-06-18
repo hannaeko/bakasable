@@ -61,9 +61,9 @@ class ObjectStore():
         return uid in self.coordinated
 
     def set_local_coordinator(self, uid, coordinator):
-        if coordinator:
+        if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)
             logger.debug('Added %d to coordinated entities', uid)
-        elif uid in self.coordinated:
+        elif not coordinator and uid in self.coordinated:
             logger.debug('Removed %d from coordinated entities', uid)
             self.coordinated.remove(uid)

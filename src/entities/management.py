@@ -22,6 +22,7 @@ class EntityManagement(object):
     def __init__(self, context):
         self.context = context
         self.recorvering_registry = {}
+        self.pending_fetch = set()
 
     def start(self):
         self.context.face.registerPrefix(
@@ -92,6 +93,10 @@ class EntityManagement(object):
 
         if chunk_uid in self.context.object_store.store:
             return
+        if chunk_uid in self.pending_fetch:  # Already loading chunk
+            return
+
+        self.pending_fetch.add(chunk_uid)
 
         logger.info('Loading chunk %d (%d, %d) from peer %d', chunk_uid, x, y, chunk_peer.uid)
         if chunk_peer.uid == self.context.peer_id:
@@ -115,7 +120,7 @@ class EntityManagement(object):
         self.context.face.expressInterest(
             interest,
             self.on_chunk_entities_data,
-            utils.on_timeout)
+            self.on_chunk_entities_timeout)
 
     def on_chunk_entities_interest(self, prefix, interest, face, interest_filter_id):
         """
@@ -127,14 +132,14 @@ class EntityManagement(object):
         x = int(interest.getName().get(-3).toEscapedString())
         y = int(interest.getName().get(-2).toEscapedString())
 
-        chunk_uid = entities.MapChunk.gen_uid(
-            self.context.game_id, x, y)
+        chunk_uid = entities.MapChunk.gen_uid(self.context.game_id, x, y)
         chunk = self.context.object_store.get(chunk_uid)
 
         logger.debug('Received ChunkEntitiesInterest for chunk %d (%d, %d)', chunk_uid, x, y)
         if chunk is not None:
+            self.context.object_store.set_local_coordinator(chunk_uid, True)
             return self.send_chunk_entities_data(
-                interest, face, entities.Chunk(map=chunk, entities=()))
+                interest, face, chunk)
 
         cb = functools.partial(self.send_chunk_or_create, interest, face, x, y)
         self.start_recorvery(
@@ -143,7 +148,7 @@ class EntityManagement(object):
             success_cb=cb)  # Success : fetch in store then send
 
     def send_chunk_entities_data(self, interest, face, chunk):
-        logger.debug('Sending ChunkEntitiesData for chunk %d (%d, %d)', chunk.map.uid, chunk.map.x, chunk.map.y)
+        logger.debug('Sending ChunkEntitiesData for chunk %d (%d, %d)', chunk.uid, chunk.map.x, chunk.map.y)
         chunk = entities.Chunk.serialize(chunk)
 
         chunk_data = pyndn.Data(interest.getName())
@@ -152,8 +157,17 @@ class EntityManagement(object):
 
     def on_chunk_entities_data(self, interest, data):
         _, chunk = entities.Chunk.deserialize(data.getContent().toBytes())
-        logger.debug('Received ChunkEntitiesData for chunk %d (%d, %d)', chunk.map.uid, chunk.map.x, chunk.map.y)
+        logger.debug('Received ChunkEntitiesData for chunk %d (%d, %d)', chunk.uid, chunk.map.x, chunk.map.y)
+        self.pending_fetch.remove(chunk.uid)
         self.context.object_store.add(chunk)
+
+    def on_chunk_entities_timeout(self, interest):
+        x = int(interest.getName().get(-3).toEscapedString())
+        y = int(interest.getName().get(-2).toEscapedString())
+
+        chunk_uid = entities.MapChunk.gen_uid(self.context.game_id, x, y)
+        self.pending_fetch.remove(chunk_uid)
+        utils.on_timeout(interest)
 
     def send_chunk_or_create(self, interest, face, x, y):
         chunk = self.create_chunk(x, y)
@@ -163,6 +177,9 @@ class EntityManagement(object):
         chunk_uid = entities.MapChunk.gen_uid(
             self.context.game_id, x, y)
         chunk = self.context.object_store.get(chunk_uid)
+
+        if chunk_uid in self.pending_fetch:
+            self.pending_fetch.remove(chunk_uid)
 
         # Chunk already exist in store, simply return it directly
         if chunk is not None:
@@ -185,20 +202,22 @@ class EntityManagement(object):
         if len(self.context.peer_store) == 1:
             failed_cb()
             return
-
+        recorvery_running = True
         if uid not in self.recorvering_registry:
             self.recorvering_registry[uid] = {
                 'success': [],
                 'failed': [],
                 'peers': []
             }
+            recorvery_running = False
 
         if success_cb:
             self.recorvering_registry[uid]['success'].append(success_cb)
         if failed_cb:
             self.recorvering_registry[uid]['failed'].append(failed_cb)
 
-        self.send_find_coordinator_interest(uid)
+        if not recorvery_running:
+            self.send_find_coordinator_interest(uid)
 
     # FindCoordinatorInterest
 
@@ -320,7 +339,12 @@ class EntityManagement(object):
     ####################
 
     def load_entity(self, uid):
-        if uid == self.context.peer_id:  # fetching peer player
+        if uid in self.pending_fetch:  # Already loading entity
+            return
+
+        self.pending_fetch.add(uid)
+
+        if uid == self.context.peer_id:  # fetching local player
             logger.info('Loading local player')
             self.start_recorvery(uid, failed_cb=self.create_player)
         else:
@@ -341,7 +365,7 @@ class EntityManagement(object):
         self.context.face.expressInterest(
             interest,
             self.on_fetch_entity_data,
-            utils.on_timeout)
+            self.on_fetch_entity_timeout)
 
     def on_fetch_entity_interest(self, prefix, interest, face, interest_filter_id):
         uid = int(interest.getName().get(-2).toEscapedString())
@@ -382,6 +406,7 @@ class EntityManagement(object):
 
     def on_fetch_entity_data(self, interest, data):
         uid = int(interest.getName().get(-2).toEscapedString())
+        self.pending_fetch.remove(uid)
         _, result = entities.Result.deserialize(data.getContent().toBytes())
 
         logger.debug('Received FetchEntityData for entity %d (status=%d)', uid, result.status)
@@ -391,7 +416,15 @@ class EntityManagement(object):
         elif result.status == bakasable.const.status_code.OK:
             self.context.object_store.add(result.value)
 
+    def on_fetch_entity_timeout(self, interest):
+        uid = int(interest.getName().get(-2).toEscapedString())
+        self.pending_fetch.remove(uid)
+        utils.on_timeout(interest)
+
     def create_player(self):
+        if self.context.peer_id in self.pending_fetch:
+            self.pending_fetch.remove(self.context.peer_id)
+
         player = entities.Player(
             uid=self.context.peer_id, x=0, y=0, pseudo=self.context.pseudo)
         self.context.object_store.add(player)

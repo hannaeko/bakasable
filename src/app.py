@@ -82,7 +82,6 @@ class App(object):
 
     def run(self):
         self.start()
-        self.entities_mngt.load_chunk(0, 0)
         self.entities_mngt.load_entity(self.peer_id)
         while self.carry_on:
             self.loop()
