@@ -59,9 +59,6 @@ class Chunk(GameObject):
 
 class Sheep(GameObject):
     id = 3
-    definition = (
-        ('plouf', String),
-    )
 
 
 class Player(GameObject):

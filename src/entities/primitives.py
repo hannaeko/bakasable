@@ -51,7 +51,7 @@ class UID64(int):
 
 class _Array(list):
     """
-    Represent a list where all element have the same type.
+    Represent a list where all elements have the same type.
     Do not use it derectly but call Array(MyClass) instead.
     """
     my_type = None
@@ -71,12 +71,22 @@ class _Array(list):
         res = b''
         my_len = 0
         for element in my_list:
-            res += cls.my_type.serialize(element)
+            if hasattr(element, 'serialize'):
+                res += element.serialize(element)
+            else:
+                res += cls.my_type.serialize(element)
             my_len += 1
         return struct.pack('!I', my_len) + res
 
 
 def Array(klass):
+    """
+    An array represent a list of element where all elements have the same type
+    (klass).
+    If the elements have a method 'serialize', it will be used instead of the
+    one of the given class for the serialization.
+    For the deserialization, the deserialize method of 'klass' will be used.
+    """
     return type('%sArray' % klass.__name__, (_Array,), {'my_type': klass})
 
 
@@ -110,7 +120,7 @@ def Option(klass):
     The value of an Option field can be either an object or None.
     The class passed in argument will be used for serialization and
     deserialization of non None value.
-    If the value has a method 'deserialize', it will be used instead of the
+    If the value has a method 'serialize', it will be used instead of the
     one of the given class.
     """
     return type('OptionOf%s' % klass.__name__, (_Option,), {'my_type': klass})

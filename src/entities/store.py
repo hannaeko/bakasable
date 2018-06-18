@@ -54,7 +54,7 @@ class ObjectStore():
         for entity in self.store.values():
             if not isinstance(entity, entities.MapChunk) and \
                 entity.x >= x and entity.y >= y and \
-                    entity.x <= x_max and entity.y <= y_max:
+                    entity.x < x_max and entity.y < y_max:
                 yield entity
 
     def is_local_coordinator(self, uid):
