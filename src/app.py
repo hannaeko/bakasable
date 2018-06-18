@@ -15,10 +15,11 @@ from bakasable import (
 
 
 class App(object):
-    def __init__(self, game_id, pseudo, peer_id):
+    def __init__(self, game_id, pseudo, peer_id, graphics=True):
         self.game_id = game_id
         self.pseudo = pseudo
         self.peer_id = peer_id
+        self.graphics = graphics
 
         self.keychain = pyndn.security.KeyChain()
 

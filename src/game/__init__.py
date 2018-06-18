@@ -4,10 +4,14 @@ import pygame
 class Game:
     def __init__(self, context):
         self.context = context
-        self.screen = pygame.display.set_mode((800, 600))
+        if self.context.graphics:
+            self.screen = pygame.display.set_mode((800, 600))
+        else:
+            self.screen = pygame.Surface((800, 600))
 
     def loop(self):
-        pygame.display.flip()
+        if self.context.graphics:
+            pygame.display.flip()
 
         # TODO: get screen size/player coordinate
         # TODO: compute list of visible chunk

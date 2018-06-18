@@ -48,10 +48,16 @@ def main():
         help='Set player pseudo.',
         default='toto')
 
+    parser.add_argument(
+        '--disable-graphics', '-d',
+        help='Disable graphical interface',
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     logger.info('Starting app with game_id=%s and peer_id=%s', args.game, args.peer)
-    my_app = bakasable.App(args.game, args.pseudo, args.peer)
+    my_app = bakasable.App(args.game, args.pseudo, args.peer, not args.disable_graphics)
     my_app.run()
 
 
