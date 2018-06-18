@@ -1,3 +1,6 @@
+import pygame
+import os
+
 from bakasable.entities.primitives import (
     String,
     Number,
@@ -42,12 +45,13 @@ class GameObject(Entity, metaclass=GameObjectType):
     )
     sprite = None
     animated = False
+    interest_zone = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.animated and self.sprite is not None:
             self.sprite = pygame.image.load(
-                os.join(asset_path, '%s.png' % self.sprite))
+                os.path.join(asset_path, '%s.png' % self.sprite))
 
     @classmethod
     def serialize(cls, object):

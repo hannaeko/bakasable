@@ -60,3 +60,12 @@ class Sheep(GameObject):
     definition = (
         ('plouf', String),
     )
+
+
+class Player(GameObject):
+    id = 4
+    definition = (
+        ('pseudo', String),
+    )
+    sprite = 'player'
+    interest_zone = 15

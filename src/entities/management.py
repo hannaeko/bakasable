@@ -307,9 +307,13 @@ class EntityManagement(object):
     ####################
 
     def load_entity(self, uid):
-        peer = self.conext.peer_store.get_closest_peer(uid)
-        logger.info('Loading entity %d from peer %d', uid, peer.uid)
-        self.send_fetch_entity_interest(peer, uid)
+        if uid == self.context.peer_id:  # fetching peer player
+            logging.info('Loading local player')
+            self.start_recorvery(uid, failed_cb=self.create_player)
+        else:
+            logger.info('Loading entity %d from peer %d', uid, peer.uid)
+            peer = self.conext.peer_store.get_closest_peer(uid)
+            self.send_fetch_entity_interest(peer, uid)
 
     def send_fetch_entity_interest(self, peer, uid):
         logger.debug('Sending FetchEntityInterest for entity %d to peer %d', uid, peer.uid)
@@ -373,3 +377,10 @@ class EntityManagement(object):
             self.context.object_store.remove(uid)
         elif result.status == bakasable.const.status_code.OK:
             self.context.object_store.add(result.value)
+
+    def create_player(self):
+        player = entities.Player(
+            uid=self.context.peer_id, x=0, y=0, pseudo=self.context.pseudo)
+        self.context.object_store.add(player)
+        logger.debug('Created player %s' % player)
+        return player
