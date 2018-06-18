@@ -68,4 +68,4 @@ class Player(GameObject):
         ('pseudo', String),
     )
     sprite = 'player'
-    interest_zone = 15
+    interest_zone = 14

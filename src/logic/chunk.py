@@ -14,7 +14,7 @@ def generate_chunk_map(seed, chunk_x, chunk_y):
     data = []
 
     for x in range(chunk_x * 15, (chunk_x + 1) * 15):
-        data.append([])
+        line = []
         for y in range(chunk_y * 15, (chunk_y + 1) * 15):
             threshold = (noise.snoise3(x / freq, y / freq, new_seed, 8) + 1) / 2
             if threshold < 0.3:
@@ -23,7 +23,8 @@ def generate_chunk_map(seed, chunk_x, chunk_y):
                 tile = bakasable.const.terrain.GRASS
             else:
                 tile = bakasable.const.terrain.WATER
-            data[x].append(tile)
+            line.append(tile)
+        data.append(line)
 
     return entities.MapChunk(
         x=chunk_x, y=chunk_y,

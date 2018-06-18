@@ -10,12 +10,17 @@ from bakasable import (
     utils,
     peers,
     entities,
-    game
+    game,
+    think
 )
+import bakasable.logic.loop  # register on_loop think functions
 
 
 class App(object):
     def __init__(self, game_id, pseudo, peer_id, graphics=True):
+        global context
+        context = self
+
         self.game_id = game_id
         self.pseudo = pseudo
         self.peer_id = peer_id
@@ -103,4 +108,5 @@ class App(object):
 
     def loop(self):
         self.face.processEvents()
+        think.on_loop.exec_all(self)
         self.game.loop()

@@ -13,7 +13,8 @@ class BaseThink:
         return func
 
     def test(self, param):
-        return all(key in param and isinstance(param[key], value)
+        return all(key in param and
+                   (param[key] == value or isinstance(param[key], value))
                    for key, value in self.action_param.items())
 
     @classmethod
@@ -37,3 +38,8 @@ class on_loop(BaseThink):
     def __init__(self, **param):
         self.priority = param.pop('priority', 500)
         super().__init__(**param)
+
+    @classmethod
+    def exec_all(cls, context):
+        cls.execute({'type': 'global', 'context': context})
+        # TODO: execute for each type in store

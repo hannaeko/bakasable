@@ -75,6 +75,10 @@ class EntityManagement(object):
     # Chunk #
     #########
 
+    def load_chunks(self, chunks_coord):
+        for coord in chunks_coord:
+            self.load_chunk(*coord)
+
     def load_chunk(self, x, y):
         """
         Load chunk at chunk coordinates x and y.
@@ -85,6 +89,9 @@ class EntityManagement(object):
         chunk_uid = entities.MapChunk.gen_uid(
             self.context.game_id, x, y)
         chunk_peer = self.context.peer_store.get_closest_peer(chunk_uid)
+
+        if chunk_uid in self.context.object_store.store:
+            return
 
         logger.info('Loading chunk %d (%d, %d) from peer %d', chunk_uid, x, y, chunk_peer.uid)
         if chunk_peer.uid == self.context.peer_id:
@@ -173,6 +180,12 @@ class EntityManagement(object):
 
     def start_recorvery(self, uid, success_cb=None, failed_cb=None):
         logger.debug('Starting recorvery for entity %d', uid)
+
+        # Alone in game, abort recorvery
+        if len(self.context.peer_store) == 1:
+            failed_cb()
+            return
+
         if uid not in self.recorvering_registry:
             self.recorvering_registry[uid] = {
                 'success': [],
@@ -308,7 +321,7 @@ class EntityManagement(object):
 
     def load_entity(self, uid):
         if uid == self.context.peer_id:  # fetching peer player
-            logging.info('Loading local player')
+            logger.info('Loading local player')
             self.start_recorvery(uid, failed_cb=self.create_player)
         else:
             logger.info('Loading entity %d from peer %d', uid, peer.uid)
