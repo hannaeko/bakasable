@@ -60,7 +60,13 @@ class ObjectStore():
     def is_local_coordinator(self, uid):
         return uid in self.coordinated
 
-    def set_local_coordinator(self, uid, coordinator):
+    def set_local_coordinator(self, uid, coordinator=None):
+        if uid not in self.store:
+            return
+
+        if coordinator is None:
+            coordinator = self.context.peer_store.get_closest_uid(obj.uid) == self.context.peer_id
+
         if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)
             logger.debug('Added %d to coordinated entities', uid)

@@ -67,10 +67,22 @@ class EntityManagement(object):
                 self.context.local_name, utils.entity_fetch_regex),
             self.on_fetch_entity_interest)
 
+        # EnterChunkInterest
+        self.context.face.setInterestFilter(pyndn.InterestFilter(self.context.local_name, utils.enter_chunk_regex), self.on_enter_chunk_interest)
+
     def get_peer_uid_tuple(self, interest):
         peer_id = int(interest.getName().get(-1).toEscapedString())
         uid = int(interest.getName().get(-2).toEscapedString())
         return peer_id, uid
+
+    def get_x_y_tuple(self, name_or_interest):
+        if isinstance(name_or_interest, pyndn.Interest):
+            name = name_or_interest.getName()
+        else:
+            name = name_or_interest
+        x = int(name.get(-3).toEscapedString())
+        y = int(name.get(-2).toEscapedString())
+        return x, y
 
     #########
     # Chunk #
@@ -129,8 +141,7 @@ class EntityManagement(object):
         Else initiate the recorvery procedure with the chunk id before creating
         the chunk if it did not managed to find it in remote peers store.
         """
-        x = int(interest.getName().get(-3).toEscapedString())
-        y = int(interest.getName().get(-2).toEscapedString())
+        x, y = self.get_x_y_tuple(interest)
 
         chunk_uid = entities.MapChunk.gen_uid(self.context.game_id, x, y)
         chunk = self.context.object_store.get(chunk_uid)
@@ -162,8 +173,7 @@ class EntityManagement(object):
         self.context.object_store.add(chunk)
 
     def on_chunk_entities_timeout(self, interest):
-        x = int(interest.getName().get(-3).toEscapedString())
-        y = int(interest.getName().get(-2).toEscapedString())
+        x, y = self.get_x_y_tuple(interest)
 
         chunk_uid = entities.MapChunk.gen_uid(self.context.game_id, x, y)
         self.pending_fetch.remove(chunk_uid)
@@ -339,6 +349,8 @@ class EntityManagement(object):
     ####################
 
     def load_entity(self, uid):
+        if uid in self.context.object_store.store:  # Already in store
+            return
         if uid in self.pending_fetch:  # Already loading entity
             return
 
@@ -348,8 +360,8 @@ class EntityManagement(object):
             logger.info('Loading local player')
             self.start_recorvery(uid, failed_cb=self.create_player)
         else:
+            peer = self.context.peer_store.get_closest_peer(uid)
             logger.info('Loading entity %d from peer %d', uid, peer.uid)
-            peer = self.conext.peer_store.get_closest_peer(uid)
             self.send_fetch_entity_interest(peer, uid)
 
     def send_fetch_entity_interest(self, peer, uid):
@@ -429,4 +441,36 @@ class EntityManagement(object):
             uid=self.context.peer_id, x=0, y=0, pseudo=self.context.pseudo)
         self.context.object_store.add(player)
         logger.debug('Created player %s' % player)
+        self.send_enter_chunk_interest(player)
         return player
+
+    #############################
+    # Enter / Leave Chunk notif #
+    #############################
+
+    def send_enter_chunk_interest(self, entity):
+        uid = entity.uid
+        chunk_x, chunk_y = entity.x // 15, entity.y // 15
+        chunk_uid = entities.MapChunk.gen_uid(
+            self.context.game_id, chunk_x, chunk_y)
+        chunk_peer = self.context.peer_store.get_closest_peer(chunk_uid)
+        if chunk_peer.uid == self.context.peer_id:
+            # TODO: send enter update to peers
+            return
+        name = pyndn.Name(chunk_peer.prefix) \
+            .append('chunk') \
+            .append(str(chunk_x)) \
+            .append(str(chunk_y)) \
+            .append('enter') \
+            .append(str(uid))
+        logger.debug('Sending EnterChunkInterest for entity %d and chunk %d (%d, %d)', uid, chunk_uid, chunk_x, chunk_y)
+        self.context.face.expressInterest(name, utils.on_dummy_data)
+
+    def on_enter_chunk_interest(self, prefix, interest, face, interest_filter_id):
+        uid = int(interest.getName().get(-1).toEscapedString())
+        x, y = self.get_x_y_tuple(interest.getName().getPrefix(-1))
+        logger.debug('Received EnterChunkInterestfor entity %d and chunk (%d, %d)', uid, x, y)
+        self.load_entity(uid)
+        self.load_chunk(x, y)
+        self.context.object_store.set_local_coordinator(uid)
+        # TODO: send enter upate to peers

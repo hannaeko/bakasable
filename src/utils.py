@@ -12,6 +12,9 @@ prefix_discovery_uri = '/localhop/nfd/rib/routable-prefixes'
 # match /chunk/<chunk x>/<chunk y>/entities
 chunk_entites_regex = '<chunk><-?[0-9]+>{2}<entities>'
 
+# match /chunk/<chunk x>/<chunk y>/enter/<entity uid>
+enter_chunk_regex = '<chunk><-?[0-9]+>{2}<enter><[0-9]+>'
+
 # match /coordinator/<entity uid>/<peer uid>
 find_coordinator_regex = '<coordinator><[0-9]+>{2}'
 
