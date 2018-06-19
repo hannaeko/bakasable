@@ -1,6 +1,5 @@
 import pygame
 import os
-
 from bakasable import game
 from bakasable.utils import asset_path
 from bakasable.entities.primitives import (
@@ -65,3 +64,49 @@ class GameObject(Entity, metaclass=GameObjectType):
     def get_sprite(self):
         if self.sprite:
             return self._sprite.current_frame
+
+
+class Diff:
+    def __init__(self, klass):
+        self.klass = klass
+        self.diff = {}
+
+    def add(self, **kwargs):
+        self.diff.update(kwargs)
+
+    def clear(self):
+        self.diff.clear()
+
+    def apply(self, obj):
+        for key, value in self.diff.items():
+            setattr(obj, key, value)
+
+    @staticmethod
+    def serialize(diff):
+        res = Number.serialize(diff.klass.id)
+        for index, (attr, klass) in enumerate(diff.klass.definition):
+            if attr in diff.diff:
+                res += Number.serialize(index)
+                res += klass.serialize(diff.diff[attr])
+        return res
+
+    @staticmethod
+    def deserialize(payload):
+        payload, object_id = Number.deserialize(payload)
+        klass = _registry[object_id]
+        diff = Diff(klass)
+        diff_dict = {}
+        while payload:
+            payload, attr_index = Number.deserialize(payload)
+            attr_name, attr_type = klass.definition[attr_index]
+            payload, attr_value = attr_type.deserialize(payload)
+            diff_dict[attr_name] = attr_value
+        diff.add(**diff_dict)
+        return diff
+
+    def __repr__(self):
+        res = '<%s of %s :: ' % (type(self).__name__, self.klass.__name__)
+        res += '; '.join(
+            '%s=%s' % (key, repr(val)) for key, val in self.diff.items())
+        res += '>'
+        return res

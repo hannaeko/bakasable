@@ -15,6 +15,9 @@ chunk_entites_regex = '<chunk><-?[0-9]+>{2}<entities>'
 # match /chunk/<chunk x>/<chunk y>/enter/<entity uid>
 enter_chunk_regex = '<chunk><-?[0-9]+>{2}<enter><[0-9]+>'
 
+# match /chunk/<chunk x>/<chunk y>/update
+chunk_update_regex = '<chunk><-?[0-9]+>{2}<updates>'
+
 # match /coordinator/<entity uid>/<peer uid>
 find_coordinator_regex = '<coordinator><[0-9]+>{2}'
 
@@ -26,6 +29,9 @@ entity_found_regex = '<entity_found><[0-9]+>{2}'
 
 # match /entity/<entity uid>/fetch
 entity_fetch_regex = '<entity><[0-9]+><fetch>'
+
+# match /entity/<entity uid>/update
+entity_update_regex = '<entity><[0-9]+><updates>'
 
 module_path = os.path.abspath(os.path.dirname(__file__))
 asset_path = os.path.join(module_path, 'assets')

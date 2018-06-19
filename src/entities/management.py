@@ -1,6 +1,3 @@
-import math
-import hashlib
-import struct
 import logging
 import functools
 
@@ -14,7 +11,6 @@ from bakasable import (
 import bakasable.logic.chunk
 import bakasable.const.status_code
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -23,6 +19,8 @@ class EntityManagement(object):
         self.context = context
         self.recorvering_registry = {}
         self.pending_fetch = set()
+        self.watched_chunks = set()
+        self.fetch_callbacks = {}
 
     def start(self):
         self.context.face.registerPrefix(
@@ -68,7 +66,22 @@ class EntityManagement(object):
             self.on_fetch_entity_interest)
 
         # EnterChunkInterest
-        self.context.face.setInterestFilter(pyndn.InterestFilter(self.context.local_name, utils.enter_chunk_regex), self.on_enter_chunk_interest)
+        self.context.face.setInterestFilter(
+            pyndn.InterestFilter(
+                self.context.local_name, utils.enter_chunk_regex),
+            self.on_enter_chunk_interest)
+
+        # EntityUpdateInterest
+        self.context.face.setInterestFilter(
+            pyndn.InterestFilter(
+                self.context.local_name, utils.entity_update_regex),
+            self.on_entity_update_interest)
+
+        # ChunkUpdateInterest
+        self.context.face.setInterestFilter(
+            pyndn.InterestFilter(
+                self.context.local_name, utils.chunk_update_regex),
+            self.on_chunk_update_interest)
 
     def get_peer_uid_tuple(self, interest):
         peer_id = int(interest.getName().get(-1).toEscapedString())
@@ -90,9 +103,9 @@ class EntityManagement(object):
 
     def load_chunks(self, chunks_coord):
         for coord in chunks_coord:
-            self.load_chunk(*coord)
+            self.load_chunk(*coord, check_coordinator=False)
 
-    def load_chunk(self, x, y):
+    def load_chunk(self, x, y, check_coordinator=True):
         """
         Load chunk at chunk coordinates x and y.
 
@@ -104,6 +117,8 @@ class EntityManagement(object):
         chunk_peer = self.context.peer_store.get_closest_peer(chunk_uid)
 
         if chunk_uid in self.context.object_store.store:
+            if check_coordinator:
+                self.context.object_store.set_local_coordinator(chunk_uid)
             return
         if chunk_uid in self.pending_fetch:  # Already loading chunk
             return
@@ -193,7 +208,7 @@ class EntityManagement(object):
 
         # Chunk already exist in store, simply return it directly
         if chunk is not None:
-            return entities.Chunk(map=chunk, entities=())
+            return chunk
 
         chunk = bakasable.logic.chunk.generate_chunk(self.context.game_id, x, y)
         self.context.object_store.add(chunk)
@@ -278,6 +293,7 @@ class EntityManagement(object):
 
         for success_cb in recorvery_obj['success']:
             success_cb()
+        self.execute_callback(uid)
 
     def on_find_coordinator_timeout(self, interest):
         peer_id, uid = self.get_peer_uid_tuple(interest)
@@ -317,6 +333,7 @@ class EntityManagement(object):
 
         if not recorvery_obj['peers']:
             logger.debug('Fail to found entity %d', uid)
+            self.fetch_callbacks.pop(uid, None)
             for failed_cb in recorvery_obj['failed']:
                 failed_cb()
         else:
@@ -348,9 +365,14 @@ class EntityManagement(object):
     # Entity retrieval #
     ####################
 
-    def load_entity(self, uid):
+    def load_entity(self, uid, callback=None):
+        self.add_fetch_callback(uid, callback)
+
         if uid in self.context.object_store.store:  # Already in store
+            self.context.object_store.set_local_coordinator(uid)
+            self.execute_callback(uid)
             return
+
         if uid in self.pending_fetch:  # Already loading entity
             return
 
@@ -363,6 +385,18 @@ class EntityManagement(object):
             peer = self.context.peer_store.get_closest_peer(uid)
             logger.info('Loading entity %d from peer %d', uid, peer.uid)
             self.send_fetch_entity_interest(peer, uid)
+
+    def add_fetch_callback(self, uid, callback):
+        if callback is None:
+            return
+
+        self.fetch_callbacks.setdefault(uid, [])
+        self.fetch_callbacks[uid].append(callback)
+
+    def execute_callback(self, uid):
+        callbacks = self.fetch_callbacks.pop(uid, [])
+        for cb in callbacks:
+            cb()
 
     def send_fetch_entity_interest(self, peer, uid):
         logger.debug('Sending FetchEntityInterest for entity %d to peer %d', uid, peer.uid)
@@ -425,12 +459,15 @@ class EntityManagement(object):
 
         if result.status == bakasable.const.status_code.DELETED_ENTITY:
             self.context.object_store.remove(uid)
+            self.fetch_callbacks.pop(uid, None)
         elif result.status == bakasable.const.status_code.OK:
             self.context.object_store.add(result.value)
+            self.execute_callback(uid)
 
     def on_fetch_entity_timeout(self, interest):
         uid = int(interest.getName().get(-2).toEscapedString())
         self.pending_fetch.remove(uid)
+        self.fetch_callbacks.pop(uid, None)
         utils.on_timeout(interest)
 
     def create_player(self):
@@ -455,7 +492,7 @@ class EntityManagement(object):
             self.context.game_id, chunk_x, chunk_y)
         chunk_peer = self.context.peer_store.get_closest_peer(chunk_uid)
         if chunk_peer.uid == self.context.peer_id:
-            # TODO: send enter update to peers
+            self.emit_enter_chunk_update(chunk_x, chunk_y, entity)
             return
         name = pyndn.Name(chunk_peer.prefix) \
             .append('chunk') \
@@ -469,8 +506,138 @@ class EntityManagement(object):
     def on_enter_chunk_interest(self, prefix, interest, face, interest_filter_id):
         uid = int(interest.getName().get(-1).toEscapedString())
         x, y = self.get_x_y_tuple(interest.getName().getPrefix(-1))
-        logger.debug('Received EnterChunkInterestfor entity %d and chunk (%d, %d)', uid, x, y)
-        self.load_entity(uid)
+        logger.debug('Received EnterChunkInterest for entity %d and chunk (%d, %d)', uid, x, y)
+        self.load_entity(
+            uid, functools.partial(self.emit_enter_chunk_update, x, y, uid))
         self.load_chunk(x, y)
-        self.context.object_store.set_local_coordinator(uid)
-        # TODO: send enter upate to peers
+
+    ###########
+    # Updates #
+    ###########
+
+    def subscribe_updates(self, chunks_coord):
+        new_chunks = chunks_coord - self.watched_chunks
+
+        self.watched_chunks = chunks_coord
+
+        for chunk_coord in new_chunks:
+            chunk = self.context.object_store.get_chunk(*chunk_coord)
+            if chunk is not None:
+                self.subscribe_updates_single_chunk(chunk)
+            else:
+                self.watched_chunks.remove(chunk_coord)
+
+    def subscribe_updates_single_chunk(self, chunk):
+        """
+        Subscribe to updates of all entity in chunk.
+        """
+        self.send_chunk_update_interest(chunk.map.x, chunk.map.y, chunk.map.uid)
+        for entity in chunk.entities:
+            self.send_entity_update_interest(entity.uid)
+
+    def emit_enter_chunk_update(self, chunk_x, chunk_y, entity_or_uid):
+        if isinstance(entity_or_uid, int):
+            entity = self.context.object_store.get(entity_or_uid)
+        else:
+            entity = entity_or_uid
+        update = entities.Result(
+            status=bakasable.const.status_code.ENTER_CHUNK, value=entity)
+        self.send_chunk_update_data(chunk_x, chunk_y, update)
+
+    # EntityUpdateInterest
+
+    def send_entity_update_interest(self, uid, interest=None):
+        entity = self.context.object_store.get(uid)
+        # Entity not watch anymore
+        if (entity.x // 15, entity.y // 15) not in self.watched_chunks:
+            return
+
+        peer = self.context.peer_store.get_closest_peer(uid)
+
+        # No need to subscribe for updates if the local peer is coordinator
+        if peer.uid == self.context.peer_id:
+            return
+
+        name = pyndn.Name(peer.prefix) \
+            .append('entity') \
+            .append(str(uid)) \
+            .append('updates')
+
+        logger.debug('Sending EntityUpdateInterest for entity %d with name %s', uid, name.toUri())
+
+        self.context.face.expressInterest(
+            name,
+            self.on_entity_update_data,
+            functools.partial(
+                self.send_entity_update_interest, uid))
+
+    def on_entity_update_interest(self, prefix, interest, face, interest_filter_id):
+        uid = int(interest.getName().get(-2).toEscapedString())
+        logger.debug('Received EntityUpdateInterest for entity %d', uid)
+        self.load_entity(uid)
+
+    def send_entity_update_data(self, uid, update):
+        logger.debug('Sending EntityUpdateData for entity %d %s', uid, update)
+
+        name = pyndn.Name(self.context.local_name) \
+            .append('entity') \
+            .append(str(uid)) \
+            .append('updates')
+
+        entity_update_data = pyndn.Data(name)
+        entity_update_data.setContent(entities.Update.serialize(update))
+        self.context.face.putData(entity_update_data)
+
+    def on_entity_update_data(self, interest, data):
+        uid = int(interest.getName().get(-2).toEscapedString())
+        logger.debug('Update received for entity %d', uid)
+
+    # ChunkUpdateInterest
+
+    def send_chunk_update_interest(self, chunk_x, chunk_y, uid, interest=None):
+        # Chunk not watched anymore, stop here
+        if (chunk_x, chunk_y) not in self.watched_chunks:
+            return
+
+        # Neep to check peer actively to be aware of coordinator changes
+        # TODO: See if possible to use leave event to be more lazy
+        peer = self.context.peer_store.get_closest_peer(uid)
+
+        # No need to subscribe for updates if the local peer is coordinator
+        if peer.uid == self.context.peer_id:
+            return
+
+        name = pyndn.Name(peer.prefix) \
+            .append('chunk') \
+            .append(str(chunk_x)) \
+            .append(str(chunk_y)) \
+            .append('updates')
+
+        logger.debug('Sending ChunkUpdateInterest for chunk %d (%d, %d) with name %s', uid, chunk_x, chunk_y, name.toUri())
+
+        self.context.face.expressInterest(
+            name,
+            self.on_chunk_update_data,
+            functools.partial(
+                self.send_chunk_update_interest, chunk_x, chunk_y, uid))
+
+    def on_chunk_update_interest(self, prefix, interest, face, interest_filter_id):
+        x, y = self.get_x_y_tuple(interest)
+        logger.debug('Received ChunkUpdateInterest for chunk (%d, %d)', x, y)
+        self.load_chunk(x, y)
+
+    def send_chunk_update_data(self, chunk_x, chunk_y, update):
+        logger.debug('Sending ChunkUpdateData for chunk (%d, %d)', chunk_x, chunk_y)
+        name = pyndn.Name(self.context.local_name) \
+            .append('chunk') \
+            .append(str(chunk_x)) \
+            .append(str(chunk_y)) \
+            .append('updates')
+
+        chunk_update_data = pyndn.Data(name)
+        chunk_update_data.setContent(entities.Result.serialize(update))
+        self.context.face.putData(chunk_update_data)
+
+    def on_chunk_update_data(self, interest, data):
+        x, y = self.get_x_y_tuple(interest)
+        logger.debug('Update received for chunk (%d, %d)', x, y)

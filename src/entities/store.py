@@ -65,7 +65,7 @@ class ObjectStore():
             return
 
         if coordinator is None:
-            coordinator = self.context.peer_store.get_closest_uid(obj.uid) == self.context.peer_id
+            coordinator = self.context.peer_store.get_closest_uid(uid) == self.context.peer_id
 
         if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)

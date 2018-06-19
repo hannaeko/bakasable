@@ -6,7 +6,7 @@ from bakasable.entities.primitives import (
     Option,
     Array
 )
-from bakasable.entities.game_base import GameObject
+from bakasable.entities.game_base import GameObject, Diff
 
 
 class Peer(Entity):
@@ -23,4 +23,11 @@ class Result(Entity):
     definition = (
         ('status', Number),
         ('value', Option(GameObject))
+    )
+
+
+class Update(Entity):
+    definition = (
+        ('type', Number),
+        ('value', Option(Diff))
     )
