@@ -36,7 +36,7 @@ class App(object):
             .append(str(self.game_id))
 
         self.peers_mngt = peers.PeerManagement(self)
-        self.entities_mngt = entities.EntityManagement(self)
+        # self.entities_mngt = entities.EntityManagement(self)
 
         self.peer_store = peers.PeerStore()
         self.object_store = entities.ObjectStore(self)
@@ -82,7 +82,7 @@ class App(object):
 
     def run(self):
         self.start()
-        self.entities_mngt.load_entity(self.peer_id)
+        entities.mngt.load_entity(self.peer_id)
         while self.carry_on:
             self.dt = self.clock.tick(60)
             self.loop()
@@ -94,7 +94,7 @@ class App(object):
         self.connected = False
 
         self.peers_mngt.start()
-        self.entities_mngt.start()
+        entities.mngt.start(self)
 
         while not self.connected:
             self.face.processEvents()

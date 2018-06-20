@@ -1,5 +1,5 @@
 from bakasable.think import on_loop
-from bakasable.entities import MapChunk
+from bakasable.entities import MapChunk, mngt
 from bakasable.logic.chunk import get_chunk_range
 
 
@@ -16,8 +16,8 @@ def load_interest_zone(context, **kw):
                 entity.x + entity.interest_zone,
                 entity.y + entity.interest_zone))
 
-    context.entities_mngt.load_chunks(interested_chunks)
-    context.entities_mngt.subscribe_updates(interested_chunks)
+    mngt.load_chunks(interested_chunks)
+    mngt.subscribe_updates(interested_chunks)
 
 
 @on_loop(priority=100, type='global')
