@@ -35,6 +35,7 @@ def send_enter_chunk_interest(entity):
     mngt.context.face.expressInterest(name, utils.on_dummy_data)
 
 
+@mngt.register_interest_filter('local', utils.enter_chunk_regex)
 def on_enter_chunk_interest(prefix, interest, face, interest_filter_id):
     uid = int(interest.getName().get(-1).toEscapedString())
     x, y = mngt.get_x_y_tuple(interest.getName().getPrefix(-1))

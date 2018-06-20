@@ -4,8 +4,9 @@ import functools
 import pyndn
 
 from bakasable import (
-    entities,
     const,
+    entities,
+    utils,
 )
 from bakasable.entities import mngt
 
@@ -74,6 +75,7 @@ def send_entity_update_interest(uid, interest=None):
             mngt.send_entity_update_interest, uid))
 
 
+@mngt.register_interest_filter('local', utils.entity_update_regex)
 def on_entity_update_interest(prefix, interest, face, interest_filter_id):
     uid = int(interest.getName().get(-2).toEscapedString())
     logger.debug('Received EntityUpdateInterest for entity %d', uid)
@@ -130,6 +132,7 @@ def send_chunk_update_interest(chunk_x, chunk_y, uid, interest=None):
             mngt.send_chunk_update_interest, chunk_x, chunk_y, uid))
 
 
+@mngt.register_interest_filter('local', utils.chunk_update_regex)
 def on_chunk_update_interest(prefix, interest, face, interest_filter_id):
     x, y = mngt.get_x_y_tuple(interest)
     logger.debug('Received ChunkUpdateInterest for chunk (%d, %d)', x, y)

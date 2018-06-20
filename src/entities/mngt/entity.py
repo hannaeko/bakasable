@@ -53,7 +53,8 @@ def send_fetch_entity_interest(peer, uid):
         mngt.on_fetch_entity_timeout)
 
 
-def on_fetch_entity_interest(mngt, prefix, interest, face, interest_filter_id):
+@mngt.register_interest_filter('local', utils.entity_fetch_regex)
+def on_fetch_entity_interest(prefix, interest, face, interest_filter_id):
     uid = int(interest.getName().get(-2).toEscapedString())
     logger.debug('Received FetchEntityInterest for entity %d', uid)
 
@@ -67,7 +68,7 @@ def on_fetch_entity_interest(mngt, prefix, interest, face, interest_filter_id):
         failed_cb=funmngt.send_deleted_entity_data)
 
 
-def send_fetch_entity_data(mngt, interest, face, entity_or_uid):
+def send_fetch_entity_data(interest, face, entity_or_uid):
     if isinstance(entity_or_uid, int):
         entity = mngt.context.object_store.get(entity_or_uid)
     else:

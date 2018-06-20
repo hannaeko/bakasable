@@ -66,6 +66,7 @@ def send_chunk_entities_interest(chunk_peer, x, y):
         mngt.on_chunk_entities_timeout)
 
 
+@mngt.register_interest_filter('local', utils.chunk_entites_regex)
 def on_chunk_entities_interest(prefix, interest, face, interest_filter_id):
     """
     Try to get the requested chunk from the local store and send it back if

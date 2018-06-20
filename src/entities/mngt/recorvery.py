@@ -51,6 +51,7 @@ def send_find_coordinator_interest(uid):
         mngt.on_find_coordinator_timeout)
 
 
+@mngt.register_interest_filter('broadcast', utils.find_coordinator_regex)
 def on_find_coordinator_interest(prefix, interest, face, interest_filter_id):
     peer_id, uid = mngt.get_peer_uid_tuple(interest)
     logger.debug('Received FindCoordinatorInterest for entity %d from peer %d',
@@ -112,6 +113,7 @@ def send_find_entity_interest(uid):
         mngt.on_find_entity_timeout)
 
 
+@mngt.register_interest_filter('broadcast', utils.find_entity_regex)
 def on_find_entity_interest(prefix, interest, face, interest_filter_id):
     peer_id, uid = mngt.get_peer_uid_tuple(interest)
     logger.debug('Received FindEntityInterest for entity %d from peer %d',
@@ -159,6 +161,7 @@ def send_entity_found_interest(peer, uid):
         utils.on_dummy_data)
 
 
+@mngt.register_interest_filter('local', utils.entity_found_regex)
 def on_entity_found_interest(prefix, interest, face, interest_filter_id):
     peer_id, uid = mngt.get_peer_uid_tuple(interest)
     logger.debug('Entity %d found at peer %d', uid, peer_id)
