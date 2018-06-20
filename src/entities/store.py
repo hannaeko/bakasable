@@ -22,9 +22,14 @@ class ObjectStore():
             self.add(obj.map)
             self.add(obj.entities)
         else:
-            self.store[obj.uid] = obj
-            logger.debug('Added %d to local store', obj.uid)
-            self.set_local_coordinator(obj.uid)
+            if obj.uid in self.coordinated:
+                logger.debug(
+                    'Entity %d already in store and coordinated, skipping',
+                    obj.uid)
+            else:
+                self.store[obj.uid] = obj
+                logger.debug('Added %d to local store', obj.uid)
+                self.set_local_coordinator(obj.uid)
 
     def remove(self, uid):
         if uid in self.store:
