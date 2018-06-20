@@ -11,6 +11,7 @@ setup(
     version='0.1',
     description='Peer to peer multiplayer sandbox game based on NDN.',
     long_description=README,
+    license="GPLv3",
     author='BlackSponge <Gaël Berthaud-Müller>',
     author_email='blacksponge@tuta.io',
     url='https://github.com/blacksponge/bakasable',
