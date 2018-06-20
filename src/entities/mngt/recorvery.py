@@ -142,9 +142,18 @@ def on_find_entity_timeout(interest):
         logger.debug('Entity %d found at peers %s',
                      uid, recorvery_obj['peers'])
 
-        # TODO: Arbitrary choice, to be replaced by latest version choice
-        peer = mngt.context.peer_store.get(recorvery_obj['peers'][0])
-        mngt.send_fetch_entity_interest(peer, uid)
+        try:
+            # TODO: Arbitrary choice, to be replaced by latest version choice
+            peer = next(filter(None, (mngt.context.peer_store.get(peer_id)
+                                      for peer_id in recorvery_obj['peers'])))
+            mngt.send_fetch_entity_interest(peer, uid)
+
+        # Remote peers left during recorvery
+        except StopIteration:
+            logger.debug(
+                'All found peers left before recorvery was finished, failing.')
+            for failed_cb in recorvery_obj['failed']:
+                failed_cb()
 
 
 # EntityFoundInterest

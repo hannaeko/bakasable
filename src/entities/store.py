@@ -69,7 +69,8 @@ class ObjectStore():
             return
 
         if coordinator is None:
-            coordinator = self.context.peer_store.get_closest_uid(uid) == self.context.peer_id
+            coordinator = self.context \
+                .peer_store.get_closest_uid(uid) == self.context.peer_id
 
         if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)
@@ -80,7 +81,7 @@ class ObjectStore():
 
             entity = self.get(uid, expend_chunk=False)
 
-            if isinstance(entity, entity.MapChunk):
-                mngt.send_chunk_update_interest(entity.x, entity.y)
+            if isinstance(entity, entities.MapChunk):
+                mngt.send_chunk_update_interest(entity.x, entity.y, uid)
             else:
                 mngt.send_entity_update_interest(uid)

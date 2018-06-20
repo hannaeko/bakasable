@@ -65,8 +65,8 @@ def send_entity_update_interest(uid, interest=None):
         .append(str(uid)) \
         .append('updates')
 
-    logger.debug('Sending EntityUpdateInterest for entity %d with name %s',
-                 uid, name.toUri())
+    logger.debug('Sending EntityUpdateInterest for entity %d to %d',
+                 uid, peer.uid)
 
     mngt.context.face.expressInterest(
         name,
@@ -122,9 +122,8 @@ def send_chunk_update_interest(chunk_x, chunk_y, uid, interest=None):
         .append(str(chunk_y)) \
         .append('updates')
 
-    logger.debug('Sending ChunkUpdateInterest for chunk %d (%d, %d) '
-                 'with name %s',
-                 uid, chunk_x, chunk_y, name.toUri())
+    logger.debug('Sending ChunkUpdateInterest for chunk %d (%d, %d) to %d',
+                 uid, chunk_x, chunk_y, peer.uid)
 
     mngt.context.face.expressInterest(
         name,
