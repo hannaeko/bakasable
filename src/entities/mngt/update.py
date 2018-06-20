@@ -113,6 +113,7 @@ def send_chunk_update_interest(chunk_x, chunk_y, uid, interest=None):
 
     # No need to subscribe for updates if the local peer is coordinator
     if peer.uid == mngt.context.peer_id:
+        # mngt.watched_chunks.remove((chunk_x, chunk_y))
         return
 
     name = pyndn.Name(peer.prefix) \

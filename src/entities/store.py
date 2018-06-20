@@ -2,6 +2,7 @@ import collections
 import logging
 
 from bakasable import entities
+from bakasable.entities import mngt
 
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,7 @@ class ObjectStore():
         else:
             self.store[obj.uid] = obj
             logger.debug('Added %d to local store', obj.uid)
-            if self.context.peer_store.get_closest_uid(obj.uid) == self.context.peer_id:
-                self.coordinated.add(obj.uid)
-                logger.debug('Added %d to coordinated entities', obj.uid)
+            self.set_local_coordinator(obj.uid)
 
     def remove(self, uid):
         if uid in self.store:
@@ -73,3 +72,10 @@ class ObjectStore():
         elif not coordinator and uid in self.coordinated:
             logger.debug('Removed %d from coordinated entities', uid)
             self.coordinated.remove(uid)
+
+            entity = self.get(uid, expend_chunk=False)
+
+            if isinstance(entity, entity.MapChunk):
+                mngt.send_chunk_update_interest(entity.x, entity.y)
+            else:
+                mngt.send_entity_update_interest(uid)

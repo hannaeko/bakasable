@@ -43,5 +43,6 @@ def on_enter_chunk_interest(prefix, interest, face, interest_filter_id):
                  'and chunk (%d, %d)',
                  uid, x, y)
     mngt.load_entity(
-        uid, functools.partial(mngt.emit_enter_chunk_update, x, y, uid))
+        uid, (functools.partial(mngt.emit_enter_chunk_update, x, y, uid),
+              functools.partial(mngt.send_entity_update_interest, uid)))
     mngt.load_chunk(x, y)

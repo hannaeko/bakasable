@@ -1,3 +1,5 @@
+import collections
+
 import pyndn
 
 from bakasable.entities import mngt
@@ -24,7 +26,11 @@ def add_fetch_callback(uid, callback):
         return
 
     mngt.fetch_callbacks.setdefault(uid, [])
-    mngt.fetch_callbacks[uid].append(callback)
+
+    if isinstance(callback, collections.Iterable):
+        mngt.fetch_callbacks[uid].extend(callback)
+    else:
+        mngt.fetch_callbacks[uid].append(callback)
 
 
 def execute_callback(uid):
