@@ -4,6 +4,7 @@ import sys
 import argparse
 
 import bakasable
+import bakasable.debug
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,8 @@ def main():
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s#%(lineno)d - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(name)s#%(lineno)d - %(message)s')
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
 
@@ -54,11 +56,27 @@ def main():
         action='store_true'
     )
 
+    parser.add_argument(
+        '--debug', '-D',
+        help='Display debug tool',
+        action='store_true')
+
     args = parser.parse_args()
 
-    logger.info('Starting app with game_id=%s and peer_id=%s', args.game, args.peer)
-    my_app = bakasable.App(args.game, args.pseudo, args.peer, not args.disable_graphics)
+    logger.info('Starting app with game_id=%s and peer_id=%s',
+                args.game, args.peer)
+    my_app = bakasable.App(args.game,
+                           args.pseudo,
+                           args.peer,
+                           not args.disable_graphics)
+    if args.debug:
+        logger.info('Starting debug tool')
+        debug_tool = bakasable.debug.DebugTool(my_app)
+
     my_app.run()
+
+    if args.debug:
+        debug_tool.root.quit()
 
 
 if __name__ == '__main__':
