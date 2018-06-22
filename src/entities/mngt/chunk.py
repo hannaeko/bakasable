@@ -19,7 +19,7 @@ def load_chunks(chunks_coord):
         mngt.load_chunk(*coord, check_coordinator=False)
 
 
-def load_chunk(x, y, check_coordinator=True):
+def load_chunk(x, y, check_coordinator=True, callback=None):
     """
     Load chunk at chunk coordinates x and y.
 
@@ -29,10 +29,12 @@ def load_chunk(x, y, check_coordinator=True):
     chunk_uid = entities.MapChunk.gen_uid(
         mngt.context.game_id, x, y)
     chunk_peer = mngt.context.peer_store.get_closest_peer(chunk_uid)
+    mngt.add_fetch_callback(chunk_uid, callback)
 
     if chunk_uid in mngt.context.object_store.store:
         if check_coordinator:
             mngt.context.object_store.set_local_coordinator(chunk_uid)
+        mngt.execute_callback(chunk_uid)
         return
     if chunk_uid in mngt.pending_fetch:  # Already loading chunk
         return
@@ -109,14 +111,19 @@ def on_chunk_entities_data(interest, data):
                  chunk.uid, chunk.map.x, chunk.map.y)
     mngt.pending_fetch.remove(chunk.uid)
     mngt.context.object_store.add(chunk)
+    mngt.execute_callback(chunk.uid)
 
 
 def on_chunk_entities_timeout(interest):
+    # NOTE: Bad design, if timeout -> do nothing, will be fetch next time
+    # TODO: Check if remote peer is alive, if not remove from store and maybe
+    # broadcast leave interest
     x, y = mngt.get_x_y_tuple(interest)
 
     chunk_uid = entities.MapChunk.gen_uid(mngt.context.game_id, x, y)
     mngt.pending_fetch.remove(chunk_uid)
     utils.on_timeout(interest)
+    mngt.execute_callback(chunk_uid)
 
 
 def send_chunk_or_create(interest, face, x, y):
@@ -131,6 +138,7 @@ def create_chunk(x, y):
 
     if chunk_uid in mngt.pending_fetch:
         mngt.pending_fetch.remove(chunk_uid)
+        mngt.execute_callback(chunk_uid)
 
     # Chunk already exist in store, simply return it directly
     if chunk is not None:

@@ -20,7 +20,11 @@ def send_enter_chunk_interest(entity):
         mngt.context.game_id, chunk_x, chunk_y)
     chunk_peer = mngt.context.peer_store.get_closest_peer(chunk_uid)
     if chunk_peer.uid == mngt.context.peer_id:
-        mngt.emit_enter_chunk_update(chunk_x, chunk_y, entity)
+        # NOTE: Workaround to send update after coordinator transfert
+        # TODO: Maybe need to be more robust
+        mngt.load_chunk(
+            chunk_x, chunk_y, callback=functools.partial(
+                mngt.emit_enter_chunk_update, chunk_x, chunk_y, entity))
         return
     name = pyndn.Name(chunk_peer.prefix) \
         .append('chunk') \
