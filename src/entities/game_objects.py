@@ -37,6 +37,9 @@ class MapChunk(GameObject):
         md5.update(struct.pack('!Qii', seed, x, y))
         return struct.unpack_from('!Q', md5.digest())[0]
 
+    def get_sprite(self):
+        return self.sprite
+
 
 class Chunk(GameObject):
     id = 2

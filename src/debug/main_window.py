@@ -1,9 +1,14 @@
 import tkinter as tk
 
+import pygame
+import PIL.Image
+import PIL.ImageTk
+
 
 class MainWindow(tk.Frame):
     def __init__(self, context, master=None):
         super().__init__(master)
+        self.master
         self.context = context
         self.pack(expand=True, fill='both')
         self.create_widgets()
@@ -29,14 +34,26 @@ class MainWindow(tk.Frame):
         self.entities_list.bind(
             '<<ListboxSelect>>', self.update_selected_object)
         self.entities_list_frame.pack(
-            side='left', fill='y', expand=True, anchor='nw')
+            side='left', fill='y', expand=False, anchor='nw')
 
         self.x_scroll['command'] = self.entities_list.xview
         self.y_scroll['command'] = self.entities_list.yview
 
-        self.object_info = tk.Text(self, wrap='word', state=tk.DISABLED)
-        self.object_info.pack(side='right', fill='both', expand=True)
-        self.object_info.tag_configure('title', font=('Times', '18', 'bold'))
+        self.info_frame = tk.Frame(self)
+
+        self.object_info = tk.Text(
+            self.info_frame, wrap='word', state=tk.DISABLED)
+        self.object_info.pack(side='left', fill='both', expand=True)
+
+        self.sprite_frame = tk.Frame(self, width=200)
+        self.sprite = tk.Label(self.sprite_frame)
+        self.sprite.pack(expand=True)
+        self.sprite_frame.pack_propagate(0)
+        self.sprite_frame.pack(side='right', fill='y')
+
+        self.object_info.tag_configure('title', font=('Times', '14', 'bold'))
+
+        self.info_frame.pack(side='right', expand=True, fill='both')
 
     def update_objects_list(self, objects_ids):
         for id in objects_ids:
@@ -65,3 +82,15 @@ class MainWindow(tk.Frame):
                 self.object_info.insert(
                     tk.END, '    \u25CF %s=%s\n' % (key, getattr(entity, key)))
             self.object_info['state'] = tk.DISABLED
+            sprite = entity.get_sprite()
+            if sprite:
+                img_str = pygame.image.tostring(sprite, 'RGBA')
+                rect = sprite.get_rect()
+                img = PIL.Image.frombytes('RGBA', (rect.w, rect.h), img_str)
+                img.thumbnail((200, 200))
+
+                self.tk_img = PIL.ImageTk.PhotoImage(img)
+                self.sprite['image'] = self.tk_img
+                self.sprite.pack()
+            else:
+                self.sprite['image'] = ''

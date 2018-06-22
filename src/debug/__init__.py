@@ -35,4 +35,4 @@ class DebugTool(threading.Thread):
         self.objects_ids = set()
 
         self.app = MainWindow(self.context, master=self.root)
-        self.app.mainloop()
+        self.root.mainloop()
