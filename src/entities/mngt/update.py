@@ -158,4 +158,9 @@ def on_chunk_update_data(interest, data):
     x, y = mngt.get_x_y_tuple(interest)
     uid = entities.MapChunk.gen_uid(mngt.context.game_id, x, y)
     logger.debug('Update received for chunk (%d, %d)', x, y)
+
+    _, update = entities.Result.deserialize(data.getContent().toBytes())
+    if update.status == const.status_code.ENTER_CHUNK:
+        mngt.context.object_store.add(update.value)
+
     mngt.send_chunk_update_interest(x, y, uid)
