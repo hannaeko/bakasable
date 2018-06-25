@@ -18,7 +18,8 @@ class String(str):
         return my_str.encode('utf8') + b'\x00'
 
 
-class Number(int):
+class Number():
+    # TODO: Number -> generic, old Number -> Integer
     """
     Generic class for numbers, encoded in big endian.
     Default to 4 bytes signed int.
@@ -35,18 +36,18 @@ class Number(int):
         return cls.my_struct.pack(my_int)
 
 
-class UID64(int):
+class UID64(Number):
     """
     Unsigned int of 8 bytes (big endian).
     """
-    @staticmethod
-    def deserialize(payload):
-        res = struct.unpack_from('!Q', payload)[0]
-        return payload[8:], res
+    my_struct = struct.Struct('!Q')
 
-    @staticmethod
-    def serialize(uid):
-        return struct.pack('!Q', uid)
+
+class Float(Number, float):
+    """
+    Floating point number of 4 bytes (big endian IEE 754)
+    """
+    my_struct = struct.Struct('!f')
 
 
 class _Array(list):

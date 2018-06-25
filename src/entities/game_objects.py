@@ -10,14 +10,18 @@ from bakasable.entities.primitives import (
     Number,
     Array
 )
-from bakasable.entities.game_base import GameObject
+from bakasable.entities.game_base import GameObject, UpdatableGameObject
 from bakasable.const import terrain
 from bakasable.const import TILE_SIZE
 
 
 class MapChunk(GameObject):
     id = 1
+    override_base = True
     definition = (
+        ('uid', UID64),
+        ('x', Number),
+        ('y', Number),
         ('data', Array(Array(Number))),
     )
 
@@ -60,8 +64,9 @@ class Chunk(GameObject):
         pass
 
 
-class Sheep(GameObject):
+class Sheep(UpdatableGameObject):
     id = 3
+    sprite = 'sheep.png'
 
 
 class Player(GameObject):

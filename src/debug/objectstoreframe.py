@@ -45,6 +45,9 @@ class ObjectStoreFrame(StoreFrame):
             for key in entity.attr:
                 self.object_info.insert(
                     tk.END, '    \u25CF %s=%s\n' % (key, getattr(entity, key)))
+
+            coordinator = self.context.peer_store.get_closest_uid(uid)
+            self.object_info.insert(tk.END, 'coordinator: %d' % coordinator)
             self.object_info['state'] = tk.DISABLED
             sprite = entity.get_sprite()
             if sprite:

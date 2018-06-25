@@ -5,8 +5,9 @@ from bakasable.utils import asset_path
 from bakasable.entities.primitives import (
     String,
     Number,
+    Float,
+    UID64,
     Entity,
-    UID64
 )
 
 
@@ -39,8 +40,8 @@ class GameObject(Entity, metaclass=GameObjectType):
     """
     id = 0
     definition = (
-        ('x', Number),
-        ('y', Number),
+        ('x', Float),
+        ('y', Float),
         ('uid', UID64)
     )
     sprite = None
@@ -95,14 +96,15 @@ class Diff:
         payload, object_id = Number.deserialize(payload)
         klass = _registry[object_id]
         diff = Diff(klass)
-        diff_dict = {}
         while payload:
             payload, attr_index = Number.deserialize(payload)
             attr_name, attr_type = klass.definition[attr_index]
             payload, attr_value = attr_type.deserialize(payload)
-            diff_dict[attr_name] = attr_value
-        diff.add(**diff_dict)
+            diff.add(attr_name, attr_value)
         return payload, diff
+
+    def __len__(self):
+        return len(self.diff)
 
     def __repr__(self):
         res = '<%s of %s :: ' % (type(self).__name__, self.klass.__name__)

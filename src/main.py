@@ -10,14 +10,7 @@ import bakasable.debug
 logger = logging.getLogger(__name__)
 
 
-def input_default(prompt, default):
-    value = input('%s [%s] ' % (prompt, default))
-    if not value:
-        return default
-    return value
-
-
-def main():
+def setup_logger():
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
@@ -25,6 +18,18 @@ def main():
         '%(asctime)s - %(levelname)s - %(name)s#%(lineno)d - %(message)s')
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
+
+    TRACE = 9
+
+    def trace(self, message, *args, **kwargs):
+        if self.isEnabledFor(TRACE):
+            self._log(TRACE, message, *args, **kwargs)
+
+    logging.Logger.trace = trace
+
+
+def main():
+    setup_logger()
 
     parser = argparse.ArgumentParser(
         prog='bakasable',

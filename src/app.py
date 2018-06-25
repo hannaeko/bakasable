@@ -84,7 +84,7 @@ class App(object):
         self.start()
         entities.mngt.load_entity(self.peer_id)
         while self.carry_on:
-            self.dt = self.clock.tick(60)
+            self.dt = self.clock.tick(20)
             self.loop()
             self.carry_on = not select.select([sys.stdin, ], [], [], 0.0)[0]
         self.stop()

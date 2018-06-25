@@ -46,6 +46,16 @@ def emit_enter_chunk_update(chunk_x, chunk_y, entity_or_uid):
     mngt.send_chunk_update_data(chunk_x, chunk_y, update)
 
 
+def emit_entity_state_change(entity):
+    if not entity.diff:
+        return
+
+    update = entities.Update(type=const.status_code.STATE_CHANGE,
+                             value=entity.diff)
+    send_entity_update_data(entity.uid, update)
+    entity.diff.clear()
+
+
 # EntityUpdateInterest
 
 def send_entity_update_interest(uid, interest=None):
@@ -65,7 +75,7 @@ def send_entity_update_interest(uid, interest=None):
         .append(str(uid)) \
         .append('updates')
 
-    logger.debug('Sending EntityUpdateInterest for entity %d to %d',
+    logger.trace('Sending EntityUpdateInterest for entity %d to %d',
                  uid, peer.uid)
 
     mngt.context.face.expressInterest(
@@ -78,12 +88,12 @@ def send_entity_update_interest(uid, interest=None):
 @mngt.register_interest_filter('local', utils.entity_update_regex)
 def on_entity_update_interest(prefix, interest, face, interest_filter_id):
     uid = int(interest.getName().get(-2).toEscapedString())
-    logger.debug('Received EntityUpdateInterest for entity %d', uid)
+    logger.trace('Received EntityUpdateInterest for entity %d', uid)
     mngt.load_entity(uid)
 
 
 def send_entity_update_data(uid, update):
-    logger.debug('Sending EntityUpdateData for entity %d %s', uid, update)
+    logger.trace('Sending EntityUpdateData for entity %d %s', uid, update)
 
     name = pyndn.Name(mngt.context.local_name) \
         .append('entity') \
@@ -97,7 +107,11 @@ def send_entity_update_data(uid, update):
 
 def on_entity_update_data(interest, data):
     uid = int(interest.getName().get(-2).toEscapedString())
-    logger.debug('Update received for entity %d', uid)
+    logger.trace('Update received for entity %d', uid)
+    entity = mngt.context.object_store.get(uid, expend_chunk=False)
+    _, update = entities.Update.deserialize(data.getContent().toBytes())
+    if update.type == const.status_code.STATE_CHANGE:
+        entity.update(update.value)
     mngt.send_entity_update_interest(uid)
 
 
