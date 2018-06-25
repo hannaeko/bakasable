@@ -35,7 +35,7 @@ class GameObject(Entity, metaclass=GameObjectType):
     """
     Game object, must have a unique non-zero id attribute.
     By default has two attributes, x and y for position.
-    GameObjects can be inherited and defintion extended.
+    GameObjects can be inherited and definition extended.
     """
     id = 0
     definition = (
@@ -71,8 +71,8 @@ class Diff:
         self.klass = klass
         self.diff = {}
 
-    def add(self, **kwargs):
-        self.diff.update(kwargs)
+    def add(self, name, value):
+        self.diff[name] = value
 
     def clear(self):
         self.diff.clear()
@@ -102,7 +102,7 @@ class Diff:
             payload, attr_value = attr_type.deserialize(payload)
             diff_dict[attr_name] = attr_value
         diff.add(**diff_dict)
-        return diff
+        return payload, diff
 
     def __repr__(self):
         res = '<%s of %s :: ' % (type(self).__name__, self.klass.__name__)
@@ -110,3 +110,22 @@ class Diff:
             '%s=%s' % (key, repr(val)) for key, val in self.diff.items())
         res += '>'
         return res
+
+
+class UpdatableGameObject(GameObject):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.diff = Diff(type(self))
+
+    def __setattr__(self, name, value):
+        try:
+            if name in self.attr:
+                self.diff.add(name, value)
+        except AttributeError:
+            pass
+        finally:
+            object.__setattr__(self, name, value)
+
+    def update(self, new_diff):
+        new_diff.apply(self)
+        self.diff.clear()
