@@ -98,6 +98,7 @@ def send_entity_update_data(uid, update):
 def on_entity_update_data(interest, data):
     uid = int(interest.getName().get(-2).toEscapedString())
     logger.debug('Update received for entity %d', uid)
+    mngt.send_entity_update_interest(uid)
 
 
 # ChunkUpdateInterest
@@ -155,4 +156,6 @@ def send_chunk_update_data(chunk_x, chunk_y, update):
 
 def on_chunk_update_data(interest, data):
     x, y = mngt.get_x_y_tuple(interest)
+    uid = entities.MapChunk.gen_uid(mngt.context.game_id, x, y)
     logger.debug('Update received for chunk (%d, %d)', x, y)
+    mngt.send_chunk_update_interest(x, y, uid)
