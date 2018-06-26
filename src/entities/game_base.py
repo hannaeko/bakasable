@@ -78,10 +78,6 @@ class Diff:
     def clear(self):
         self.diff.clear()
 
-    def apply(self, obj):
-        for key, value in self.diff.items():
-            setattr(obj, key, value)
-
     @staticmethod
     def serialize(diff):
         res = Number.serialize(diff.klass.id)
@@ -123,11 +119,23 @@ class UpdatableGameObject(GameObject):
         try:
             if name in self.attr:
                 self.diff.add(name, value)
+            else:
+                object.__setattr__(self, name, value)
         except AttributeError:
-            pass
-        finally:
             object.__setattr__(self, name, value)
 
-    def update(self, new_diff):
-        new_diff.apply(self)
+    def update(self, new_diff=None):
+        if new_diff is None:
+            new_diff = self.diff
+
+        for key, value in new_diff.diff.items():
+            object.__setattr__(self, key, value)
+
         self.diff.clear()
+
+    def chunk_changed(self):
+        if 'x' in self.diff.diff or 'y' in self.diff.diff:
+            new_x = self.diff.diff.get('x', self.x)
+            new_y = self.diff.diff.get('y', self.y)
+            return new_x // 15 != self.x // 15 or new_y // 15 != self.y // 15
+        return False

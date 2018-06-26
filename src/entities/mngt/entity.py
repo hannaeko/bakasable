@@ -30,6 +30,8 @@ def load_entity(uid, callback=None):
     if uid == mngt.context.peer_id:  # fetching local player
         logger.info('Loading local player')
         mngt.start_recorvery(uid, failed_cb=mngt.create_player)
+    elif mngt.context.peer_store.get_closest_uid(uid) == mngt.context.peer_id:
+        mngt.start_recorvery(uid)
     else:
         peer = mngt.context.peer_store.get_closest_peer(uid)
         logger.info('Loading entity %d from peer %d', uid, peer.uid)

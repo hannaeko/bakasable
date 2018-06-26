@@ -64,11 +64,12 @@ def on_find_coordinator_interest(prefix, interest, face, interest_filter_id):
     # TODO: End pending update interests with CoordinatorChangedData
 
     mngt.context.object_store.set_local_coordinator(uid, False)
+
     mngt.send_find_coordinator_data(interest, face, entity)
 
 
 def send_find_coordinator_data(interest, face, entity):
-    logger.debug('Sending FindCoordinatorData for entity %d', entity.uid)
+    logger.debug('Sending FindCoordinatorData for entity %s', entity)
 
     final_object = entity.serialize(entity)
 

@@ -43,3 +43,7 @@ def random_walk_sheep(target, **kw):
 @on_loop(priority=300, target=UpdatableGameObject)
 def dispatch_update(target, *kw):
     mngt.emit_entity_state_change(target)
+    new_chunk = target.chunk_changed()
+    target.update()
+    if new_chunk:
+        mngt.send_enter_chunk_interest(target)

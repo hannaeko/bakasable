@@ -53,7 +53,6 @@ def emit_entity_state_change(entity):
     update = entities.Update(type=const.status_code.STATE_CHANGE,
                              value=entity.diff)
     send_entity_update_data(entity.uid, update)
-    entity.diff.clear()
 
 
 # EntityUpdateInterest
@@ -176,5 +175,6 @@ def on_chunk_update_data(interest, data):
     _, update = entities.Result.deserialize(data.getContent().toBytes())
     if update.status == const.status_code.ENTER_CHUNK:
         mngt.context.object_store.add(update.value)
+        mngt.send_entity_update_interest(update.value.uid)
 
     mngt.send_chunk_update_interest(x, y, uid)

@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 def send_enter_chunk_interest(entity):
     uid = entity.uid
-    chunk_x, chunk_y = entity.x // 15, entity.y // 15
+    chunk_x, chunk_y = int(entity.x // 15), int(entity.y // 15)
     chunk_uid = entities.MapChunk.gen_uid(
-        mngt.context.game_id, chunk_x, chunk_y)
+        mngt.context.game_id, int(chunk_x), int(chunk_y))
     chunk_peer = mngt.context.peer_store.get_closest_peer(chunk_uid)
     if chunk_peer.uid == mngt.context.peer_id:
         # NOTE: Workaround to send update after coordinator transfert
