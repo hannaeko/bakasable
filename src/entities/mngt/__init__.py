@@ -4,6 +4,7 @@ import pyndn
 
 from bakasable import utils
 from bakasable.entities.mngt.common import *
+from bakasable.entities.mngt.coordinator import *
 from bakasable.entities.mngt.chunk import *
 from bakasable.entities.mngt.chunk_notif import *
 from bakasable.entities.mngt.entity import *

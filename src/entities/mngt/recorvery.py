@@ -79,11 +79,11 @@ def send_find_coordinator_data(interest, face, entity):
 
 
 def on_find_coordinator_data(interest, data):
-    entity = entities.GameObject.deserialize(data.getContent().toBytes())
-    mngt.context.object_store.add(entity)
-
     peer_id, uid = mngt.get_peer_uid_tuple(interest)
     logger.debug('Successfuly found coordinator for entity %d', uid)
+
+    _, entity = entities.GameObject.deserialize(data.getContent().toBytes())
+    mngt.context.object_store.add(entity)
 
     recorvery_obj = mngt.recorvering_registry[uid]
     del mngt.recorvering_registry[uid]

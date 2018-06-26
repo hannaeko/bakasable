@@ -75,6 +75,7 @@ class ObjectStore():
         if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)
             logger.debug('Added %d to coordinated entities', uid)
+            mngt.send_coordinator_change_interest(uid)
         elif not coordinator and uid in self.coordinated:
             logger.debug('Removed %d from coordinated entities', uid)
             self.coordinated.remove(uid)
