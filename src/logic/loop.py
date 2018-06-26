@@ -15,6 +15,7 @@ def load_interest_zone(context, **kw):
 
     for uid in context.object_store.coordinated:
         entity = context.object_store.get(uid, expend_chunk=False)
+        # TODO: subscribe for update for entities in coordinated chunk
         if not isinstance(entity, MapChunk):
             interested_chunks.update(get_chunk_range(
                 entity.x - entity.interest_zone,

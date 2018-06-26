@@ -12,6 +12,13 @@ class ObjectStoreFrame(StoreFrame):
     def create_widgets(self):
         super().create_widgets()
 
+        self.filter_coordinated = tk.IntVar()
+        self.coordinated_checkbox = tk.Checkbutton(
+            self.list_frame,
+            text='Coordinated',
+            variable=self.filter_coordinated)
+        self.coordinated_checkbox.pack(side='top', anchor='nw')
+
         self.object_info = tk.Text(
             self, wrap='word', state=tk.DISABLED)
 

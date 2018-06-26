@@ -24,8 +24,8 @@ class StoreFrame(tk.Frame):
             xscrollcommand=self.x_scroll.set,
             yscrollcommand=self.y_scroll.set)
 
-        self.list.pack(
-            side='left', fill='y', expand=True, anchor='nw')
+        self.list.pack(side='bottom', fill='y', expand=True)
+
         self.list.bind(
             '<<ListboxSelect>>', self.on_list_selected_change)
         self.list_frame.pack(
