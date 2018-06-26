@@ -9,7 +9,7 @@ class Game:
         self.context = context
         if self.context.graphics:
             self.screen = pygame.display.set_mode((800, 600))
-            pygame.display.set_caption('Bakasable')
+            pygame.display.set_caption('Bakasable - %d' % self.context.peer_id)
         else:
             self.screen = pygame.Surface((800, 600))
 

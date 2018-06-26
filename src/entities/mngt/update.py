@@ -61,12 +61,14 @@ def send_entity_update_interest(uid, interest=None):
     entity = mngt.context.object_store.get(uid)
     # Entity not watch anymore
     if (entity.x // 15, entity.y // 15) not in mngt.watched_chunks:
+        logger.debug('Skipping send EntityUpdateInterest for entity %s: chunk not watched', uid)
         return
 
     peer = mngt.context.peer_store.get_closest_peer(uid)
 
     # No need to subscribe for updates if the local peer is coordinator
     if peer.uid == mngt.context.peer_id:
+        logger.debug('Skipping send EntityUpdateInterest for entity %s: entity coordinated by local peer', uid)
         return
 
     name = pyndn.Name(peer.prefix) \

@@ -41,7 +41,7 @@ class DebugTool(threading.Thread):
         self.root = tk.Tk()
         self.root.protocol('WM_DELETE_WINDOW', self.callback)
         self.root.geometry('800x300')
-        self.root.title('Debug Tool')
+        self.root.title('Debug Tool - %d' % self.context.peer_id)
         self.root.resizable(0, 0)
         self.root.after(100, self.update_window)
 
