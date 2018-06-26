@@ -41,6 +41,7 @@ class StoreFrame(tk.Frame):
                     list_uid = self.value_to_id(value)
                     if list_uid == uid:
                         self.list.delete(index)
+                        break
 
         for uid in new_ids:
             self.list.insert(tk.END, self.id_to_value(uid))

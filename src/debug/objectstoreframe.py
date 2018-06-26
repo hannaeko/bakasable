@@ -31,6 +31,9 @@ class ObjectStoreFrame(StoreFrame):
         self.object_info.tag_configure('title', font=('Times', '14', 'bold'))
         self.object_info.pack(side='right', fill='both', expand=True)
 
+        self.selected_entity = None
+        self.after(500, self.update_info_view)
+
     def id_to_value(self, uid):
         obj = self.context.object_store.get(uid, expend_chunk=False)
         return '%s#%d' % (type(obj).__name__, obj.uid)
@@ -43,28 +46,39 @@ class ObjectStoreFrame(StoreFrame):
         if selected:
             value = self.list.get(selected[0])
             uid = int(value.split('#')[1])
-            entity = self.context.object_store.get(uid, expend_chunk=False)
+            self.selected_entity = self.context.object_store.get(
+                uid, expend_chunk=False)
+            self.update_info_view(False)
 
-            self.object_info['state'] = tk.NORMAL
-            self.object_info.delete('1.0', tk.END)
+    def update_info_view(self, call=True):
+        if call:
+            self.after(500, self.update_info_view)
+        if not self.selected_entity:
+            return
+        self.object_info['state'] = tk.NORMAL
+        self.object_info.delete('1.0', tk.END)
+        self.object_info.insert(
+            tk.END, '%s#%d\n' % (
+                type(self.selected_entity).__name__, self.selected_entity.uid),
+            'title')
+        for key in self.selected_entity.attr:
             self.object_info.insert(
-                tk.END, '%s\n' % value, 'title')
-            for key in entity.attr:
-                self.object_info.insert(
-                    tk.END, '    \u25CF %s=%s\n' % (key, getattr(entity, key)))
+                tk.END, '    \u25CF %s=%s\n' % (
+                    key, getattr(self.selected_entity, key)))
 
-            coordinator = self.context.peer_store.get_closest_uid(uid)
-            self.object_info.insert(tk.END, 'coordinator: %d' % coordinator)
-            self.object_info['state'] = tk.DISABLED
-            sprite = entity.get_sprite()
-            if sprite:
-                img_str = pygame.image.tostring(sprite, 'RGBA')
-                rect = sprite.get_rect()
-                img = PIL.Image.frombytes('RGBA', (rect.w, rect.h), img_str)
-                img.thumbnail((200, 200))
+        coordinator = self.context.peer_store \
+            .get_closest_uid(self.selected_entity.uid)
+        self.object_info.insert(tk.END, 'coordinator: %d' % coordinator)
+        self.object_info['state'] = tk.DISABLED
+        sprite = self.selected_entity.get_sprite()
+        if sprite:
+            img_str = pygame.image.tostring(sprite, 'RGBA')
+            rect = sprite.get_rect()
+            img = PIL.Image.frombytes('RGBA', (rect.w, rect.h), img_str)
+            img.thumbnail((200, 200))
 
-                self.tk_img = PIL.ImageTk.PhotoImage(img)
-                self.sprite['image'] = self.tk_img
-                self.sprite.pack()
-            else:
-                self.sprite['image'] = ''
+            self.tk_img = PIL.ImageTk.PhotoImage(img)
+            self.sprite['image'] = self.tk_img
+            self.sprite.pack()
+        else:
+            self.sprite['image'] = ''
