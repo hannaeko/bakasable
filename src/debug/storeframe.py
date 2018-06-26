@@ -36,13 +36,14 @@ class StoreFrame(tk.Frame):
 
     def update_list(self, new_ids, old_ids):
         if old_ids:
-            for index, value in enumerate(self.list.get(0, tk.END)):
-                uid = self.value_to_id(value)
-                if uid in old_ids:
-                    self.list.delete(index)
+            for uid in old_ids:
+                for index, value in enumerate(self.list.get(0, tk.END)):
+                    list_uid = self.value_to_id(value)
+                    if list_uid == uid:
+                        self.list.delete(index)
 
-        for id in new_ids:
-            self.list.insert(tk.END, self.id_to_value(id))
+        for uid in new_ids:
+            self.list.insert(tk.END, self.id_to_value(uid))
 
     def on_list_selected_change(self, evt):
         pass
