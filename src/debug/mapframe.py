@@ -17,8 +17,32 @@ class MapFrame(tk.Frame):
         self.after(500, self.update_map)
 
     def create_widgets(self):
-        self.canvas = tk.Canvas(self)
+        self.control_frame = tk.Frame(self)
+        self.position_label = tk.Label(self.control_frame, text='x=0, y=0')
+        self.position_label.pack(side='left')
+        self.reset_pos_button = tk.Button(
+            self.control_frame, text='Reset', command=self.reset_coord)
+        self.reset_pos_button.pack(side='left')
+        self.control_frame.pack(fill='x', expand=True)
+        self.canvas = tk.Canvas(self, background='black')
         self.canvas.pack(fill='both', expand=True)
+        self.canvas.bind("<ButtonPress-1>", self.scroll_start)
+        self.canvas.bind("<B1-Motion>", self.scroll_move)
+
+    def scroll_start(self, event):
+        self.canvas.scan_mark(event.x, event.y)
+
+    def scroll_move(self, event):
+        self.position_label['text'] = 'x=%d, y=%d' % (
+            self.canvas.canvasx(0), self.canvas.canvasy(0))
+        self.canvas.scan_dragto(event.x, event.y, gain=1)
+
+    def reset_coord(self):
+        self.canvas.scan_mark(0, 0)
+        self.canvas.scan_dragto(int(self.canvas.canvasx(0)),
+                                int(self.canvas.canvasy(0)),
+                                gain=1)
+        self.position_label['text'] = 'x=0, y=0'
 
     def update_map(self):
         self.after(500, self.update_map)
@@ -34,11 +58,11 @@ class MapFrame(tk.Frame):
 
                     self.chunks_img[entity.uid] = PIL.ImageTk.PhotoImage(img)
                     self.canvas.create_image(
-                        (self.canvas.winfo_width()//2+90*entity.x,
-                         self.canvas.winfo_height()//2+90*entity.y),
+                        (self.canvas.winfo_width()//2+90*entity.x+45,
+                         self.canvas.winfo_height()//2+90*entity.y+45),
                         image=self.chunks_img[entity.uid])
-                    x = self.canvas.winfo_width()//2+90*entity.x-45
-                    y = self.canvas.winfo_height()//2+90*entity.y-45
+                    x = self.canvas.winfo_width()//2+90*entity.x
+                    y = self.canvas.winfo_height()//2+90*entity.y
                     if entity.uid in self.context.object_store.coordinated:
                         self.canvas.create_rectangle(
                             x, y, x+90, y+90, fill='', outline='red')
