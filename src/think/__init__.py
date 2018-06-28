@@ -1,4 +1,5 @@
 from sortedcontainers import SortedSet
+import inspect
 
 
 class BaseThink:
@@ -14,7 +15,8 @@ class BaseThink:
 
     def test(self, param):
         return all(key in param and
-                   (param[key] == value or isinstance(param[key], value))
+                   (param[key] == value or
+                    (inspect.isclass(value) and isinstance(param[key], value)))
                    for key, value in self.action_param.items())
 
     @classmethod

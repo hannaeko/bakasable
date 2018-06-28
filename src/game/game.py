@@ -1,7 +1,13 @@
+import logging
+
 import pygame
 
 from bakasable.logic.chunk import get_chunk_range
 from bakasable.const import TILE_SIZE
+from bakasable.think import on_event
+
+
+logger = logging.getLogger(__name__)
 
 
 class Game:
@@ -48,3 +54,10 @@ class Game:
                     self.screen.blit(sprite,
                                      (entity.x * TILE_SIZE - top_left_x,
                                       entity.y * TILE_SIZE - top_left_y))
+
+    def process_events(self):
+        for event in pygame.event.get():
+            logger.debug('Got event: %s', event)
+            kwargs = event.dict
+            kwargs.update({'type': event.type, 'context': self.context})
+            on_event.execute(kwargs)

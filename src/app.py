@@ -14,6 +14,7 @@ from bakasable import (
     think
 )
 import bakasable.logic.loop  # register on_loop think functions
+import bakasable.logic.game  # register on_event think functions
 
 
 class App(object):
@@ -110,4 +111,5 @@ class App(object):
     def loop(self):
         self.face.processEvents()
         think.on_loop.exec_all(self)
+        self.game.process_events()
         self.game.loop()
