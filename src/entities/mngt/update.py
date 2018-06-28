@@ -59,17 +59,29 @@ def emit_entity_state_change(entity):
 
 def send_entity_update_interest(uid, interest=None):
     entity = mngt.context.object_store.get(uid)
-    # Entity not watch anymore
-    if (entity.x // 15, entity.y // 15) not in mngt.watched_chunks:
-        logger.debug('Skipping send EntityUpdateInterest for entity %s: chunk not watched', uid)
-        return
 
     peer = mngt.context.peer_store.get_closest_peer(uid)
 
     # No need to subscribe for updates if the local peer is coordinator
     if peer.uid == mngt.context.peer_id:
-        logger.debug('Skipping send EntityUpdateInterest for entity %s: entity coordinated by local peer', uid)
+        # TODO: active check when coordinator leave the game
+        # (prevent entity freeze)
+        mngt.context.object_store.set_local_coordinator(entity.uid, True)
+        logger.debug('Skipping send EntityUpdateInterest for entity %s: '
+                     'entity coordinated by local peer',
+                     uid)
         return
+
+    # Entity not watch anymore
+    if (entity.x // 15, entity.y // 15) not in mngt.watched_chunks:
+        logger.debug('Skipping send EntityUpdateInterest for entity %s: '
+                     'chunk not watched, chunk=(%d, %d) watched_chunks=%s',
+                     uid, entity.x // 15, entity.y // 15, mngt.watched_chunks)
+
+        entity.active = False
+        return
+
+    entity.active = True
 
     name = pyndn.Name(peer.prefix) \
         .append('entity') \
@@ -156,8 +168,8 @@ def on_chunk_update_interest(prefix, interest, face, interest_filter_id):
 
 
 def send_chunk_update_data(chunk_x, chunk_y, update):
-    logger.debug('Sending ChunkUpdateData for chunk (%d, %d)',
-                 chunk_x, chunk_y)
+    logger.debug('Sending ChunkUpdateData for chunk (%d, %d): %s',
+                 chunk_x, chunk_y, update)
     name = pyndn.Name(mngt.context.local_name) \
         .append('chunk') \
         .append(str(chunk_x)) \
@@ -172,9 +184,9 @@ def send_chunk_update_data(chunk_x, chunk_y, update):
 def on_chunk_update_data(interest, data):
     x, y = mngt.get_x_y_tuple(interest)
     uid = entities.MapChunk.gen_uid(mngt.context.game_id, x, y)
-    logger.debug('Update received for chunk (%d, %d)', x, y)
 
     _, update = entities.Result.deserialize(data.getContent().toBytes())
+    logger.debug('Update received for chunk (%d, %d): %s', x, y, update)
     if update.status == const.status_code.ENTER_CHUNK:
         mngt.context.object_store.add(update.value)
         mngt.send_entity_update_interest(update.value.uid)

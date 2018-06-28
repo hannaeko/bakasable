@@ -69,7 +69,7 @@ class Sheep(UpdatableGameObject):
     sprite = 'sheep.png'
 
 
-class Player(GameObject):
+class Player(UpdatableGameObject):
     id = 4
     definition = (
         ('pseudo', String),

@@ -95,9 +95,14 @@ class MapFrame(tk.Frame):
                 else:
                     x = self.canvas.winfo_width() // 2 + 6 * entity.x
                     y = self.canvas.winfo_height() // 2 + 6 * entity.y
-                    color = 'orange'
+
                     if entity.uid in self.context.object_store.coordinated:
                         color = 'red'
+                    elif not entity.active:
+                        color = 'lightgray'
+                    else:
+                        color = 'orange'
+
                     obj_id = self.canvas.create_rectangle(
                         x-5, y-5,  x+5, y+5,
                         fill=color, tag=('entity', 'object'))

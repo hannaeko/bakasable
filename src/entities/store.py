@@ -27,13 +27,15 @@ class ObjectStore():
                     'Entity %d already in store and coordinated, skipping',
                     obj.uid)
             else:
-                self.store[obj.uid] = obj
                 logger.debug('Added %d to local store', obj.uid)
+                logger.debug('Old = %s ; New = %s',
+                             self.store.get(obj.uid), obj)
+                self.store[obj.uid] = obj
                 self.set_local_coordinator(obj.uid)
 
     def remove(self, uid):
         if uid in self.store:
-            del self.store['uid']
+            self.store.pop('uid', None)
             logger.debug('Removed %d from local store', uid)
         if uid in self.coordinated:
             self.coordinated.remove(uid)
@@ -74,12 +76,15 @@ class ObjectStore():
 
         if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)
+            if hasattr(self.store[uid], 'active'):
+                self.store[uid].active = True
             logger.debug('Added %d to coordinated entities', uid)
             mngt.send_coordinator_change_interest(uid)
         elif not coordinator and uid in self.coordinated:
             logger.debug('Removed %d from coordinated entities', uid)
             self.coordinated.remove(uid)
-
+            if hasattr(self.store[uid], 'active'):
+                self.store[uid].active = False
             entity = self.get(uid, expend_chunk=False)
 
             if isinstance(entity, entities.MapChunk):

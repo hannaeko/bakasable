@@ -47,7 +47,7 @@ class Float(Number, float):
     """
     Floating point number of 4 bytes (big endian IEE 754)
     """
-    my_struct = struct.Struct('!f')
+    my_struct = struct.Struct('!d')
 
 
 class _Array(list):

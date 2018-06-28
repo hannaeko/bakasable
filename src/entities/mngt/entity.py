@@ -17,7 +17,10 @@ logger = logging.getLogger(__name__)
 def load_entity(uid, callback=None):
     mngt.add_fetch_callback(uid, callback)
 
-    if uid in mngt.context.object_store.store:  # Already in store
+    # Already in store and active
+    if uid in mngt.context.object_store.store and \
+       mngt.context.object_store.store.get(uid).active:
+
         mngt.context.object_store.set_local_coordinator(uid)
         mngt.execute_callback(uid)
         return

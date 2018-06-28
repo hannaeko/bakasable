@@ -17,7 +17,7 @@ def send_enter_chunk_interest(entity):
     uid = entity.uid
     chunk_x, chunk_y = int(entity.x // 15), int(entity.y // 15)
     chunk_uid = entities.MapChunk.gen_uid(
-        mngt.context.game_id, int(chunk_x), int(chunk_y))
+        mngt.context.game_id, chunk_x, chunk_y)
     chunk_peer = mngt.context.peer_store.get_closest_peer(chunk_uid)
     if chunk_peer.uid == mngt.context.peer_id:
         # NOTE: Workaround to send update after coordinator transfert
@@ -33,8 +33,8 @@ def send_enter_chunk_interest(entity):
         .append('enter') \
         .append(str(uid))
     logger.debug('Sending EnterChunkInterest for entity %d '
-                 'and chunk %d (%d, %d)',
-                 uid, chunk_uid, chunk_x, chunk_y)
+                 'and chunk %d (%d, %d), %s',
+                 uid, chunk_uid, chunk_x, chunk_y, entity)
 
     mngt.context.face.expressInterest(name, utils.on_dummy_data)
 

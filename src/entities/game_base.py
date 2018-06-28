@@ -114,6 +114,7 @@ class UpdatableGameObject(GameObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.diff = Diff(type(self))
+        self.active = False
 
     def __setattr__(self, name, value):
         try:
