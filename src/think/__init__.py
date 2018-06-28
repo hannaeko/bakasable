@@ -46,4 +46,5 @@ class on_loop(BaseThink):
         cls.execute({'type': 'global', 'context': context})
         for uid in set(context.object_store.coordinated):
             cls.execute(
-                {'target': context.object_store.get(uid, expend_chunk=False)})
+                {'target': context.object_store.get(uid, expend_chunk=False),
+                 'context': context})

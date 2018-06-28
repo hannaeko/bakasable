@@ -2,7 +2,13 @@ import random
 import logging
 
 from bakasable.think import on_loop
-from bakasable.entities import UpdatableGameObject, MapChunk, Sheep, mngt
+from bakasable.entities import (
+    UpdatableGameObject,
+    MapChunk,
+    Sheep,
+    Player,
+    mngt
+)
 from bakasable.logic.chunk import get_chunk_range
 
 
@@ -41,8 +47,14 @@ def random_walk_sheep(target, **kw):
         target.y += random.choices([1, -1])[0]/5
 
 
+@on_loop(priority=200, target=Player)
+def update_player(context, target, **kw):
+    target.x += target.speed.x * context.dt
+    target.y += target.speed.y * context.dt
+
+
 @on_loop(priority=300, target=UpdatableGameObject)
-def dispatch_update(target, *kw):
+def dispatch_update(target, **kw):
     mngt.emit_entity_state_change(target)
     new_chunk = target.chunk_changed()
     target.update()

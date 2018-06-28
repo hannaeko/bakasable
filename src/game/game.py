@@ -29,8 +29,8 @@ class Game:
 
         screen_rect = self.screen.get_rect()
 
-        top_left_x = round(player.x - screen_rect.w / 2)
-        top_left_y = round(player.y - screen_rect.h / 2)
+        top_left_x = round(player.x * TILE_SIZE - screen_rect.w / 2)
+        top_left_y = round(player.y * TILE_SIZE - screen_rect.h / 2)
 
         chunks_coord = get_chunk_range(
             top_left_x // TILE_SIZE,

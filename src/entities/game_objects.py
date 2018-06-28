@@ -75,5 +75,9 @@ class Player(UpdatableGameObject):
         ('pseudo', String),
     )
     sprite = 'player'
-    animated = True
+    animated = False
     interest_zone = 14
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.speed = pygame.math.Vector2(0, 0)
