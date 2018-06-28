@@ -83,6 +83,10 @@ def send_fetch_entity_data(interest, face, entity_or_uid):
 
     result = entities.Result(
         status=const.status_code.OK, value=entity)
+    name = interest.getName()
+
+    if hasattr(entity, 'version'):
+        name.appendVersion(entity.version)
 
     fetch_entity_data = pyndn.Data(interest.getName())
     fetch_entity_data.setContent(entities.Result.serialize(result))
@@ -95,7 +99,8 @@ def send_deleted_entity_data(interest, face):
 
     result = entities.Result(
         status=const.status_code.DELETED_ENTITY, value=None)
-    deleted_entity_data = pyndn.Data(interest.getName())
+    name = interest.getName().appendVersion(utils.get_timestamp())
+    deleted_entity_data = pyndn.Data(name)
     deleted_entity_data.setContent(entities.Result.serialize(result))
 
     face.putData(deleted_entity_data)

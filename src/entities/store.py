@@ -26,6 +26,11 @@ class ObjectStore():
                 logger.debug(
                     'Entity %d already in store and coordinated, skipping',
                     obj.uid)
+            elif obj.uid in self.store and hasattr(obj, 'version') and \
+                    self.store[obj.uid].version >= obj.version:
+                logger.debug(
+                    'Entity %d already in store with newer version, skipping',
+                    obj.uid)
             else:
                 logger.debug('Added %d to local store', obj.uid)
                 logger.debug('Old = %s ; New = %s',

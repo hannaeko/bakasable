@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,10 @@ coordinator_change_regex = '<coordinator_change><[0-9]+>'
 
 module_path = os.path.abspath(os.path.dirname(__file__))
 asset_path = os.path.join(module_path, 'assets')
+
+
+def get_timestamp():
+    return round(datetime.utcnow().timestamp() * 1000)
 
 
 def on_registration_success(prefix, registered_prefix_id):

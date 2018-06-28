@@ -1,7 +1,12 @@
-import pygame
 import os
+
+import pygame
+
 from bakasable import game
-from bakasable.utils import asset_path
+from bakasable.utils import (
+    asset_path,
+    get_timestamp
+)
 from bakasable.entities.primitives import (
     String,
     Number,
@@ -74,6 +79,7 @@ class Diff:
 
     def add(self, name, value):
         self.diff[name] = value
+        self.diff['version'] = get_timestamp()
 
     def clear(self):
         self.diff.clear()
@@ -111,7 +117,13 @@ class Diff:
 
 
 class UpdatableGameObject(GameObject):
+    definition = (
+        ('version', UID64()),
+    )
+
     def __init__(self, **kwargs):
+        if 'version' not in kwargs:
+            kwargs['version'] = get_timestamp()
         super().__init__(**kwargs)
         self.diff = Diff(type(self))
         self.active = False

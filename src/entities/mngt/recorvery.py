@@ -17,7 +17,8 @@ def start_recorvery(uid, success_cb=None, failed_cb=None):
 
     # Alone in game, abort recorvery
     if len(mngt.context.peer_store) == 1:
-        failed_cb()
+        if failed_cb:
+            failed_cb()
         return
     recorvery_running = True
     if uid not in mngt.recorvering_registry:
