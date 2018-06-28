@@ -1,5 +1,6 @@
 import random
 import logging
+import pygame
 
 from bakasable.think import on_loop
 from bakasable.entities import (
@@ -22,7 +23,7 @@ def load_interest_zone(context, **kw):
     for uid in context.object_store.coordinated:
         entity = context.object_store.get(uid, expend_chunk=False)
         # TODO: subscribe for update for entities in coordinated chunk
-        if not isinstance(entity, MapChunk):
+        if not isinstance(entity, MapChunk) and getattr(entity, 'active', False):
             interested_chunks.update(get_chunk_range(
                 entity.x - entity.interest_zone,
                 entity.y - entity.interest_zone,
@@ -31,13 +32,6 @@ def load_interest_zone(context, **kw):
 
     mngt.load_chunks(interested_chunks)
     mngt.subscribe_updates(interested_chunks)
-
-
-@on_loop(priority=100, type='global')
-def update_sprite(context, **kw):
-    for entity in context.object_store.store.values():
-        if entity.sprite_name:
-            entity.sprite.update(context.dt)
 
 
 @on_loop(priority=200, target=Sheep)

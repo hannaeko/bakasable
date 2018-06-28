@@ -29,8 +29,6 @@ class MapChunk(GameObject):
         super().__init__(**kwargs)
         self._sprite = None
 
-
-
     @staticmethod
     def gen_uid(seed, x, y):
         md5 = hashlib.md5()
@@ -46,7 +44,7 @@ class MapChunk(GameObject):
 
             pygame.surfarray.blit_array(col_map, np.array(pix))
             self._sprite = pygame.transform.scale(col_map,
-                                                 (15*TILE_SIZE, 15*TILE_SIZE))
+                                                  (15*TILE_SIZE, 15*TILE_SIZE))
 
         return self._sprite
 
