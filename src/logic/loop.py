@@ -36,8 +36,8 @@ def load_interest_zone(context, **kw):
 @on_loop(priority=100, type='global')
 def update_sprite(context, **kw):
     for entity in context.object_store.store.values():
-        if hasattr(entity, '_sprite'):
-            entity._sprite.update(context.dt)
+        if entity.sprite_name:
+            entity.sprite.update(context.dt)
 
 
 @on_loop(priority=200, target=Sheep)

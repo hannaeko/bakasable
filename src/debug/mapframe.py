@@ -67,9 +67,9 @@ class MapFrame(tk.Frame):
         try:
             for entity in self.context.object_store.store.values():
                 if isinstance(entity, MapChunk):
-                    sprite = entity.get_sprite()
-                    img_str = pygame.image.tostring(sprite, 'RGB')
-                    rect = sprite.get_rect()
+                    img_str = pygame.image.tostring(
+                        entity.current_frame, 'RGB')
+                    rect = entity.current_frame.get_rect()
                     img = PIL.Image.frombytes('RGB', (rect.w, rect.h), img_str)
                     img.thumbnail((90, 90))
 

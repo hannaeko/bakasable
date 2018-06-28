@@ -70,10 +70,10 @@ class ObjectStoreFrame(StoreFrame):
             .get_closest_uid(self.selected_entity.uid)
         self.object_info.insert(tk.END, 'coordinator: %d' % coordinator)
         self.object_info['state'] = tk.DISABLED
-        sprite = self.selected_entity.get_sprite()
-        if sprite:
-            img_str = pygame.image.tostring(sprite, 'RGBA')
-            rect = sprite.get_rect()
+        if self.selected_entity.current_frame:
+            img_str = pygame.image.tostring(
+                self.selected_entity.current_frame, 'RGBA')
+            rect = self.selected_entity.current_frame.get_rect()
             img = PIL.Image.frombytes('RGBA', (rect.w, rect.h), img_str)
             img.thumbnail((200, 200))
 

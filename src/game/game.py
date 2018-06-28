@@ -41,17 +41,18 @@ class Game:
         chunks = filter(None,
                         (self.context.object_store.get_chunk(*chunk_coord)
                          for chunk_coord in chunks_coord))
+        entity_big_bag = set()
 
         for chunk in chunks:
             self.screen.blit(
-                chunk.map.sprite,
+                chunk.map.current_frame,
                 (chunk.map.x * 15 * TILE_SIZE - top_left_x,
                  chunk.map.y * 15 * TILE_SIZE - top_left_y))
-
-            for entity in chunk.entities:
-                sprite = entity.get_sprite()
-                if sprite:
-                    self.screen.blit(sprite,
+            entity_big_bag.add(chunk.entities)
+        for entity_small_bag in entity_big_bag:
+            for entity in entity_small_bag:
+                if entity.sprite_name:
+                    self.screen.blit(entity.current_frame,
                                      (entity.x * TILE_SIZE - top_left_x,
                                       entity.y * TILE_SIZE - top_left_y))
 

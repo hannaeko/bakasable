@@ -12,7 +12,7 @@ def quit_game(context, **kw):
 @on_event(type=pygame.KEYDOWN)
 def start_moving_player(context, key, **kw):
     player = context.object_store.get(context.peer_id)
-    player._sprite.start_animation()
+    player.sprite.start_animation()
     if key == pygame.K_UP:
         player.speed.y -= PLAYER_WALKING_SPEED
     if key == pygame.K_DOWN:
@@ -27,7 +27,7 @@ def start_moving_player(context, key, **kw):
 def stop_moving_player(context, key, **kw):
     player = context.object_store.get(context.peer_id)
     if player.speed.x == 0 and player.speed.y == 0:
-        player._sprite.stop_animation()
+        player.sprite.stop_animation()
     if key == pygame.K_UP:
         player.speed.y += PLAYER_WALKING_SPEED
     if key == pygame.K_DOWN:

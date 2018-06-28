@@ -49,14 +49,13 @@ class GameObject(Entity, metaclass=GameObjectType):
         ('y', Float),
         ('uid', UID64)
     )
-    sprite = None
+    sprite_name = None
     animated = False
     interest_zone = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if self.sprite:
-            self._sprite = game.Sprite(self.sprite, self.animated)
+        self._sprite = None
 
     @classmethod
     def serialize(cls, object):
@@ -67,9 +66,16 @@ class GameObject(Entity, metaclass=GameObjectType):
         payload, object_id = Number.deserialize(payload)
         return super(GameObject, _registry[object_id]).deserialize(payload)
 
-    def get_sprite(self):
-        if self.sprite:
-            return self._sprite.current_frame
+    @property
+    def current_frame(self):
+        if self.sprite_name:
+            return self.sprite.current_frame
+
+    @property
+    def sprite(self):
+        if self._sprite is None:
+            self._sprite = game.Sprite(self.sprite_name, self.animated)
+        return self._sprite
 
 
 class Diff:
