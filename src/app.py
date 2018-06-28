@@ -86,7 +86,8 @@ class App(object):
         while self.carry_on:
             self.dt = self.clock.tick(20)
             self.loop()
-            self.carry_on = not select.select([sys.stdin, ], [], [], 0.0)[0]
+            self.pending_input = select.select([sys.stdin, ], [], [], 0.0)[0]
+            self.carry_on = self.carry_on and not self.pending_input
         self.stop()
 
     def start(self):
@@ -101,7 +102,8 @@ class App(object):
             time.sleep(0.01)
 
     def stop(self):
-        input()
+        if self.pending_input:
+            input()
         self.peers_mngt.stop()
         self.face.shutdown()
 

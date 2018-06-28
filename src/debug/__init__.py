@@ -12,7 +12,8 @@ class DebugTool(threading.Thread):
         self.start()
 
     def callback(self):
-        pass
+        if not self.context.graphics:
+            self.context.carry_on = False
 
     def update_set(self, all_ids, cb):
         current_ids = self.ids_registry.get(cb, set())
