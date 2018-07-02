@@ -58,8 +58,10 @@ class Game:
                                       entity.y * TILE_SIZE - top_left_y))
 
     def process_events(self):
+        if not self.context.graphics:
+            return
         for event in pygame.event.get():
-            logger.debug('Got event: %s', event)
+            logger.trace('Got event: %s', event)
             kwargs = event.dict
             kwargs.update({'type': event.type, 'context': self.context})
             on_event.execute(kwargs)

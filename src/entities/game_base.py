@@ -2,7 +2,9 @@ import os
 
 import pygame
 
+from bakasable.entities import mngt
 from bakasable import game
+from bakasable import const
 from bakasable.utils import (
     asset_path,
     get_timestamp
@@ -56,6 +58,15 @@ class GameObject(Entity, metaclass=GameObjectType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._sprite = None
+        self.active = False
+        self.touch()
+
+    def touch(self):
+        self.freshness = get_timestamp()
+
+    @property
+    def is_fresh(self):
+        return (self.x // 15, self.y // 15) in mngt.player_watch or self.freshness + const.FRESH_TIMEOUT > get_timestamp()
 
     @classmethod
     def serialize(cls, object):
@@ -132,7 +143,6 @@ class UpdatableGameObject(GameObject):
             kwargs['version'] = get_timestamp()
         super().__init__(**kwargs)
         self.diff = Diff(type(self))
-        self.active = False
 
     def __setattr__(self, name, value):
         try:

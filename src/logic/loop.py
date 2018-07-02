@@ -19,19 +19,25 @@ logger = logging.getLogger(__name__)
 @on_loop(priority=10, type='global')
 def load_interest_zone(context, **kw):
     interested_chunks = set()
+    player_interest = set()
 
     for uid in context.object_store.coordinated:
         entity = context.object_store.get(uid, expend_chunk=False)
         # TODO: subscribe for update for entities in coordinated chunk
-        if not isinstance(entity, MapChunk) and getattr(entity, 'active', False):
-            interested_chunks.update(get_chunk_range(
+        if not isinstance(entity, MapChunk):
+            interest_zone = get_chunk_range(
                 entity.x - entity.interest_zone,
                 entity.y - entity.interest_zone,
                 entity.x + entity.interest_zone,
-                entity.y + entity.interest_zone))
+                entity.y + entity.interest_zone)
+            if entity.uid == context.peer_id:
+                player_interest.update(interest_zone)
+            elif entity.is_fresh:
+                interested_chunks.update(interest_zone)
 
-    mngt.load_chunks(interested_chunks)
-    mngt.subscribe_updates(interested_chunks)
+    mngt.load_chunks(interested_chunks | player_interest)
+    mngt.subscribe_updates(
+        interested_chunks | player_interest, player_interest)
 
 
 @on_loop(priority=200, target=Sheep)

@@ -14,10 +14,11 @@ from bakasable.entities import mngt
 logger = logging.getLogger(__name__)
 
 
-def subscribe_updates(chunks_coord):
+def subscribe_updates(chunks_coord, player_watch):
     new_chunks = chunks_coord - mngt.watched_chunks
 
     mngt.watched_chunks = chunks_coord
+    mngt.player_watch = player_watch
 
     for chunk_coord in new_chunks:
         chunk = mngt.context.object_store.get_chunk(*chunk_coord)
@@ -31,7 +32,8 @@ def subscribe_updates_single_chunk(chunk):
     """
     Subscribe to updates of all entity in chunk.
     """
-    mngt.send_chunk_update_interest(chunk.map.x, chunk.map.y, chunk.map.uid)
+    mngt.send_chunk_update_interest(
+        chunk.map.x, chunk.map.y, chunk.map.uid)
     for entity in chunk.entities:
         mngt.send_entity_update_interest(entity.uid)
 
@@ -61,6 +63,7 @@ def send_entity_update_interest(uid, interest=None):
     entity = mngt.context.object_store.get(uid)
 
     peer = mngt.context.peer_store.get_closest_peer(uid)
+    chunk_coord = (entity.x // 15, entity.y // 15)
 
     # No need to subscribe for updates if the local peer is coordinator
     if peer.uid == mngt.context.peer_id:
@@ -73,7 +76,7 @@ def send_entity_update_interest(uid, interest=None):
         return
 
     # Entity not watch anymore
-    if (entity.x // 15, entity.y // 15) not in mngt.watched_chunks:
+    if chunk_coord not in mngt.watched_chunks:
         logger.debug('Skipping send EntityUpdateInterest for entity %s: '
                      'chunk not watched, chunk=(%d, %d) watched_chunks=%s',
                      uid, entity.x // 15, entity.y // 15, mngt.watched_chunks)
@@ -88,21 +91,29 @@ def send_entity_update_interest(uid, interest=None):
         .append(str(uid)) \
         .append('updates')
 
+    if chunk_coord in mngt.player_watch:
+        name.append('touch')
+
     logger.trace('Sending EntityUpdateInterest for entity %d to %d',
                  uid, peer.uid)
-
     mngt.context.face.expressInterest(
         name,
         mngt.on_entity_update_data,
-        functools.partial(
-            mngt.send_entity_update_interest, uid))
+        functools.partial(mngt.send_entity_update_interest, uid))
 
 
 @mngt.register_interest_filter('local', utils.entity_update_regex)
 def on_entity_update_interest(prefix, interest, face, interest_filter_id):
-    uid = int(interest.getName().get(-2).toEscapedString())
+    touch = False
+    if interest.getName().get(-1).toEscapedString() == 'touch':
+        touch = True
+    uid = int(interest.getName().get(-2 - touch).toEscapedString())
     logger.trace('Received EntityUpdateInterest for entity %d', uid)
-    mngt.load_entity(uid)
+    entity = mngt.context.object_store.get(uid)
+    if entity is not None and touch:
+        entity.touch()
+    elif not entity:
+        mngt.load_entity(uid)
 
 
 def send_entity_update_data(uid, update):
@@ -111,7 +122,8 @@ def send_entity_update_data(uid, update):
     name = pyndn.Name(mngt.context.local_name) \
         .append('entity') \
         .append(str(uid)) \
-        .append('updates')
+        .append('updates') \
+        .append('touch')
 
     entity_update_data = pyndn.Data(name)
     entity_update_data.setContent(entities.Update.serialize(update))
@@ -119,7 +131,7 @@ def send_entity_update_data(uid, update):
 
 
 def on_entity_update_data(interest, data):
-    uid = int(interest.getName().get(-2).toEscapedString())
+    uid = int(data.getName().get(-3).toEscapedString())
     logger.trace('Update received for entity %d', uid)
     entity = mngt.context.object_store.get(uid, expend_chunk=False)
     _, update = entities.Update.deserialize(data.getContent().toBytes())
@@ -150,6 +162,9 @@ def send_chunk_update_interest(chunk_x, chunk_y, uid, interest=None):
         .append(str(chunk_y)) \
         .append('updates')
 
+    if (chunk_x, chunk_y) in mngt.player_watch:
+        name.append('touch')
+
     logger.debug('Sending ChunkUpdateInterest for chunk %d (%d, %d) to %d',
                  uid, chunk_x, chunk_y, peer.uid)
 
@@ -162,9 +177,21 @@ def send_chunk_update_interest(chunk_x, chunk_y, uid, interest=None):
 
 @mngt.register_interest_filter('local', utils.chunk_update_regex)
 def on_chunk_update_interest(prefix, interest, face, interest_filter_id):
-    x, y = mngt.get_x_y_tuple(interest)
+    touch = False
+    name = interest.getName()
+    if interest.getName().get(-1).toEscapedString() == 'touch':
+        touch = True
+        name = name.getPrefix(-1)
+
+    x, y = mngt.get_x_y_tuple(name)
     logger.debug('Received ChunkUpdateInterest for chunk (%d, %d)', x, y)
-    mngt.load_chunk(x, y)
+    chunk = mngt.context.object_store.get_chunk(x, y)
+
+    if chunk is not None and touch:
+        logger.debug('Chunk touched')
+        chunk.touch()
+    elif not chunk:
+        mngt.load_chunk(x, y)
 
 
 def send_chunk_update_data(chunk_x, chunk_y, update):
@@ -174,7 +201,8 @@ def send_chunk_update_data(chunk_x, chunk_y, update):
         .append('chunk') \
         .append(str(chunk_x)) \
         .append(str(chunk_y)) \
-        .append('updates')
+        .append('updates') \
+        .append('touch')
 
     chunk_update_data = pyndn.Data(name)
     chunk_update_data.setContent(entities.Result.serialize(update))
@@ -182,7 +210,7 @@ def send_chunk_update_data(chunk_x, chunk_y, update):
 
 
 def on_chunk_update_data(interest, data):
-    x, y = mngt.get_x_y_tuple(interest)
+    x, y = mngt.get_x_y_tuple(data.getName().getPrefix(-1))
     uid = entities.MapChunk.gen_uid(mngt.context.game_id, x, y)
 
     _, update = entities.Result.deserialize(data.getContent().toBytes())

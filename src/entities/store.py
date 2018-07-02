@@ -54,10 +54,10 @@ class ObjectStore():
                 entities=self.get_entities_in_chunk(entity.x, entity.y))
         return entity
 
-    def get_chunk(self, chunk_x, chunk_y):
+    def get_chunk(self, chunk_x, chunk_y, expand=True):
         chunk_uid = entities.MapChunk.gen_uid(
             self.context.game_id, chunk_x, chunk_y)
-        return self.get(chunk_uid)
+        return self.get(chunk_uid, expend_chunk=True)
 
     def get_entities_in_chunk(self, chunk_x, chunk_y):
         x, y = 15 * chunk_x, 15 * chunk_y
@@ -81,15 +81,13 @@ class ObjectStore():
 
         if coordinator and uid not in self.coordinated:
             self.coordinated.add(uid)
-            if hasattr(self.store[uid], 'active'):
-                self.store[uid].active = True
+            self.store[uid].active = True
             logger.debug('Added %d to coordinated entities', uid)
             mngt.send_coordinator_change_interest(uid)
         elif not coordinator and uid in self.coordinated:
             logger.debug('Removed %d from coordinated entities', uid)
             self.coordinated.remove(uid)
-            if hasattr(self.store[uid], 'active'):
-                self.store[uid].active = False
+            self.store[uid].active = False
             entity = self.get(uid, expend_chunk=False)
 
             if isinstance(entity, entities.MapChunk):

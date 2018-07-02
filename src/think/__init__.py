@@ -45,6 +45,8 @@ class on_loop(BaseThink):
     def exec_all(cls, context):
         cls.execute({'type': 'global', 'context': context})
         for uid in set(context.object_store.coordinated):
-            cls.execute(
-                {'target': context.object_store.get(uid, expend_chunk=False),
-                 'context': context})
+            entity = context.object_store.get(uid, expend_chunk=False)
+            if entity.is_fresh:
+                cls.execute(
+                    {'target': entity,
+                     'context': context})
