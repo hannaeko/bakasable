@@ -33,7 +33,14 @@ def generate_chunk_map(seed, chunk_x, chunk_y):
 
 
 def generate_chunk_entities(seed, x, y):
-    return [entities.Sheep(x=(x*15+8), y=(y*15+8), uid=random.getrandbits(64))]
+    return [
+        entities.Sheep(
+            x=(x*15+8),
+            init_x=(x*15+8),
+            y=(y*15+8),
+            init_y=(y*15+8),
+            uid=random.getrandbits(64))
+        ]
 
 
 def generate_chunk(seed, x, y):

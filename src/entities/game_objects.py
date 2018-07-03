@@ -1,18 +1,20 @@
 import struct
 import hashlib
+import random
 
 import numpy as np
 import pygame
 
 from bakasable.entities.primitives import (
-    String,
-    UID64,
+    Array,
+    Float,
     Number,
-    Array
+    String,
+    UID64
 )
 from bakasable.entities.game_base import GameObject, UpdatableGameObject
 from bakasable.const import terrain
-from bakasable.const import TILE_SIZE
+from bakasable.const import TILE_SIZE, SHEEP_WALKING_RANGE
 
 
 class MapChunk(GameObject):
@@ -71,6 +73,22 @@ class Chunk(GameObject):
 class Sheep(UpdatableGameObject):
     id = 3
     sprite_name = 'sheep.png'
+    definition = (
+        ('init_x', Float),
+        ('init_y', Float)
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.direction = pygame.math.Vector2(self.x, self.y)
+        self.rest = 0
+
+    def change_direction(self):
+        self.direction = pygame.math.Vector2(
+            random.uniform(self.init_x - SHEEP_WALKING_RANGE,
+                           self.init_x + SHEEP_WALKING_RANGE),
+            random.uniform(self.init_y - SHEEP_WALKING_RANGE,
+                           self.init_y + SHEEP_WALKING_RANGE))
 
 
 class Player(UpdatableGameObject):

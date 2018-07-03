@@ -1,5 +1,7 @@
 import random
 import logging
+import math
+
 import pygame
 
 from bakasable.think import on_loop
@@ -11,6 +13,7 @@ from bakasable.entities import (
     mngt
 )
 from bakasable.logic.chunk import get_chunk_range
+from bakasable import const
 
 
 logger = logging.getLogger(__name__)
@@ -41,10 +44,34 @@ def load_interest_zone(context, **kw):
 
 
 @on_loop(priority=200, target=Sheep)
-def random_walk_sheep(target, **kw):
-    if random.random() > 0.7:
-        target.x += random.choices([1, -1])[0]/5
-        target.y += random.choices([1, -1])[0]/5
+def random_walk_sheep(context, target, **kw):
+    if target.rest:
+        target.rest -= 1
+        return
+
+    action = random.choices([0, 1, 2], [100, 1, 10])[0]
+
+    if action == 1:  # change direction
+        target.change_direction()
+    elif action == 2:
+        target.rest = random.randint(20, 40)
+        target.change_direction()
+    else:
+        new_pos = pygame.math.Vector2(target.direction)
+        new_pos.x -= target.x
+        new_pos.y -= target.y
+        try:
+            new_pos.normalize_ip()
+        except ValueError:
+            new_pos = pygame.math.Vector2(0)
+        new_pos *= const.SHEEP_WALKING_SPEED
+        target.x += new_pos.x
+        target.y += new_pos.y
+        if math.isclose(target.x, target.direction.x,
+                        abs_tol=const.SHEEP_WALKING_SPEED) or \
+                math.isclose(target.y, target.direction.y,
+                             abs_tol=const.SHEEP_WALKING_SPEED):
+            target.change_direction()
 
 
 @on_loop(priority=200, target=Player)
