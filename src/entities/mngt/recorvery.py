@@ -147,7 +147,7 @@ def on_find_entity_timeout(interest):
 
         try:
             peer = next(filter(None, (mngt.context.peer_store.get(peer_id)
-                                      for version, peer_id in
+                                      for timestamp, peer_id in
                                       sorted(recorvery_obj['peers'],
                                              key=lambda e: e[0],
                                              reverse=True))))
@@ -170,7 +170,7 @@ def send_entity_found_interest(peer, entity):
         .append('entity_found') \
         .append(str(entity.uid)) \
         .append(str(mngt.context.peer_id)) \
-        .append(str(entity.version))
+        .append(str(entity.timestamp))
 
     mngt.context.face.expressInterest(
         name,
@@ -180,9 +180,9 @@ def send_entity_found_interest(peer, entity):
 @mngt.register_interest_filter('local', utils.entity_found_regex)
 def on_entity_found_interest(prefix, interest, face, interest_filter_id):
     name = interest.getName()
-    version = int(name.get(-1).toEscapedString())
+    timestamp = int(name.get(-1).toEscapedString())
     peer_id, uid = mngt.get_peer_uid_tuple(name.getPrefix(-1))
-    logger.debug('Entity %d found at peer %d with version %d',
-                 uid, peer_id, version)
+    logger.debug('Entity %d found at peer %d with timestamp %d',
+                 uid, peer_id, timestamp)
     if uid in mngt.recorvering_registry:
-        mngt.recorvering_registry[uid]['peers'].append((version, peer_id))
+        mngt.recorvering_registry[uid]['peers'].append((timestamp, peer_id))

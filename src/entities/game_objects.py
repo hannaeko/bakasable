@@ -57,7 +57,8 @@ class Chunk(GameObject):
     definition = (
         ('uid', UID64),  # For consistency and logging, same as map.uid
         ('map', MapChunk),
-        ('entities', Array(GameObject))
+        ('entities', Array(GameObject)),
+        ('timestamp', UID64())
     )
 
     @property
