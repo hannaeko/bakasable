@@ -82,7 +82,7 @@ def send_entity_update_interest(uid, interest=None):
     if peer.uid == mngt.context.peer_id:
         # TODO: active check when coordinator leave the game
         # (prevent entity freeze)
-        # mngt.context.object_store.set_local_coordinator(entity.uid, True)
+        mngt.context.object_store.set_local_coordinator(entity.uid, True)
         logger.debug('Skipping send EntityUpdateInterest for entity %s: '
                      'entity coordinated by local peer',
                      uid)

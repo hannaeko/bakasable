@@ -54,8 +54,6 @@ class GameObject(Entity, metaclass=GameObjectType):
         ('x', Float),
         ('y', Float),
         ('uid', UID64),
-        ('version', Number()),
-        ('timestamp', UID64()),
     )
 
     sprite_name = None
@@ -63,8 +61,6 @@ class GameObject(Entity, metaclass=GameObjectType):
     interest_zone = 0
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('timestamp', get_timestamp())
-        kwargs.setdefault('version', 1)
         super().__init__(**kwargs)
         self._sprite = None
         self.active = False
@@ -164,7 +160,15 @@ class Diff:
 
 
 class UpdatableGameObject(GameObject):
+    definition = (
+        ('version', Number()),
+        ('timestamp', UID64()),
+    )
+
     def __init__(self, **kwargs):
+        kwargs.setdefault('timestamp', get_timestamp())
+        kwargs.setdefault('version', 1)
+
         super().__init__(**kwargs)
         self.diff = Diff(type(self))
 

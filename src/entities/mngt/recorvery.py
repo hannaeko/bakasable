@@ -170,7 +170,7 @@ def send_entity_found_interest(peer, entity):
         .append('entity_found') \
         .append(str(entity.uid)) \
         .append(str(mngt.context.peer_id)) \
-        .append(str(entity.timestamp))
+        .append(str(getattr(entity, 'timestamp', 0)))
 
     mngt.context.face.expressInterest(
         name,
