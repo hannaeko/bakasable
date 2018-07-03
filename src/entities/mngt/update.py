@@ -61,12 +61,12 @@ def emit_entity_catch_up(entity, version):
     logger.trace('Emit catch up for entity %d [%d -> %d]',
                  entity.uid, version, entity.version)
     diff = entity.diff.compute_diff_from(version)
-    if diff is None:
-        update = entities.Update(type=const.status_code.FULL_STATE,
-                                 value=entities.Diff(entity))
-    else:
+    if diff:
         update = entities.Update(type=const.status_code.STATE_CHANGE,
                                  value=diff)
+    else:
+        update = entities.Update(type=const.status_code.FULL_STATE,
+                                 value=entities.Diff(entity))
     send_entity_update_data(entity.uid, version, update)
 
 
@@ -134,7 +134,8 @@ def on_entity_update_interest(prefix, interest, face, interest_filter_id):
                      entity.version)
         if touch:
             entity.touch()
-        if version < entity.version:
+        # NOTE: remote version > local -> coordinator trust so send full state
+        if version != entity.version:
             mngt.emit_entity_catch_up(entity, version)
         else:
             logger.trace('Entity %d update to date in remote store',
