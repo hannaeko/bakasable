@@ -110,7 +110,7 @@ class Diff:
 
     def add(self, name, value):
         self.diff[name] = value
-        self.diff['version'] = get_timestamp()
+        self.diff['timestamp'] = get_timestamp()
 
     def clear(self):
         if len(self.diff):
@@ -160,18 +160,22 @@ class Diff:
 
 class UpdatableGameObject(GameObject):
     definition = (
-        ('version', UID64()),
+        ('version', Number()),
+        ('timestamp', UID64()),
     )
 
     def __init__(self, **kwargs):
         if 'version' not in kwargs:
-            kwargs['version'] = get_timestamp()
+            kwargs['timestamp'] = get_timestamp()
+            kwargs['version'] = 1
         super().__init__(**kwargs)
         self.diff = Diff(type(self))
 
     def __setattr__(self, name, value):
         try:
             if name in self.attr:
+                if not self.diff:
+                    self.diff.add('version', self.version + 1)
                 self.diff.add(name, value)
             else:
                 object.__setattr__(self, name, value)
