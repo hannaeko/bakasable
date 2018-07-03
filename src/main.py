@@ -26,12 +26,10 @@ def setup_logger():
             self._log(logging.TRACE, message, args, **kwargs)
 
     logging.Logger.trace = trace
-    root_logger.setLevel(logging.DEBUG)
 
 
 def main():
     setup_logger()
-
     parser = argparse.ArgumentParser(
         prog='bakasable',
         description=' Peer to peer multiplayer sandbox game based on NDN.')
@@ -67,7 +65,20 @@ def main():
         help='Display debug tool',
         action='store_true')
 
+    parser.add_argument(
+        '-v',
+        action='count',
+        help='Log verbosity from 0 to 5, default to 3')
+
     args = parser.parse_args()
+
+    loglevels = [logging.CRITICAL,
+                 logging.ERROR,
+                 logging.WARNING,
+                 logging.INFO,
+                 logging.DEBUG,
+                 logging.TRACE]
+    logging.getLogger().setLevel(loglevels[3 if args.v is None else args.v])
 
     logger.info('Starting app with game_id=%s and peer_id=%s',
                 args.game, args.peer)
@@ -75,6 +86,7 @@ def main():
                            args.pseudo,
                            args.peer,
                            not args.disable_graphics)
+
     if args.debug:
         logger.info('Starting debug tool')
         debug_tool = bakasable.debug.DebugTool(my_app)
