@@ -122,8 +122,9 @@ def on_find_entity_interest(prefix, interest, face, interest_filter_id):
                  uid, peer_id)
     peer = mngt.context.peer_store.get(peer_id)
 
-    if mngt.context.object_store.get(uid) is not None:
-        mngt.send_entity_found_interest(peer, uid)
+    entity = mngt.context.object_store.get(uid)
+    if entity is not None:
+        mngt.send_entity_found_interest(peer, entity)
 
 
 def on_find_entity_timeout(interest):
@@ -145,9 +146,11 @@ def on_find_entity_timeout(interest):
                      uid, recorvery_obj['peers'])
 
         try:
-            # TODO: Arbitrary choice, to be replaced by latest version choice
             peer = next(filter(None, (mngt.context.peer_store.get(peer_id)
-                                      for peer_id in recorvery_obj['peers'])))
+                                      for version, peer_id in
+                                      sorted(recorvery_obj['peers'],
+                                             key=lambda e: e[0],
+                                             reverse=True))))
             mngt.send_fetch_entity_interest(peer, uid)
 
         # Remote peers left during recorvery
@@ -160,13 +163,15 @@ def on_find_entity_timeout(interest):
 
 # EntityFoundInterest
 
-def send_entity_found_interest(peer, uid):
+def send_entity_found_interest(peer, entity):
     logger.debug('Sending EntityFoundInterest for entity %d to peer %d',
-                 uid, peer.uid)
+                 entity.uid, peer.uid)
     name = pyndn.Name(peer.prefix) \
         .append('entity_found') \
-        .append(str(uid)) \
-        .append(str(mngt.context.peer_id))
+        .append(str(entity.uid)) \
+        .append(str(mngt.context.peer_id)) \
+        .append(str(entity.version))
+
     mngt.context.face.expressInterest(
         name,
         utils.on_dummy_data)
@@ -174,7 +179,10 @@ def send_entity_found_interest(peer, uid):
 
 @mngt.register_interest_filter('local', utils.entity_found_regex)
 def on_entity_found_interest(prefix, interest, face, interest_filter_id):
-    peer_id, uid = mngt.get_peer_uid_tuple(interest)
-    logger.debug('Entity %d found at peer %d', uid, peer_id)
+    name = interest.getName()
+    version = int(name.get(-1).toEscapedString())
+    peer_id, uid = mngt.get_peer_uid_tuple(name.getPrefix(-1))
+    logger.debug('Entity %d found at peer %d with version %d',
+                 uid, peer_id, version)
     if uid in mngt.recorvering_registry:
-        mngt.recorvering_registry[uid]['peers'].append(peer_id)
+        mngt.recorvering_registry[uid]['peers'].append((version, peer_id))

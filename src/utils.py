@@ -25,8 +25,8 @@ find_coordinator_regex = '<coordinator><[0-9]+>{2}'
 # match /entity/<entity uid>/<peer uid>
 find_entity_regex = '<entity><[0-9]+>{2}'
 
-# match /entity_found/<entity uid>/<peer uid>
-entity_found_regex = '<entity_found><[0-9]+>{2}'
+# match /entity_found/<entity uid>/<peer uid>/<version>
+entity_found_regex = '<entity_found><[0-9]+>{3}'
 
 # match /entity/<entity uid>/fetch
 entity_fetch_regex = '<entity><[0-9]+><fetch>'

@@ -18,7 +18,8 @@ def register_interest_filter(name_type, regex):
 def set_interest_filter():
     for name_type, regex, cb in interest_filters_registry:
         prefix = getattr(mngt.context, '%s_name' % name_type)
-        mngt.context.face.setInterestFilter(pyndn.InterestFilter(prefix, regex), cb)
+        mngt.context.face.setInterestFilter(
+            pyndn.InterestFilter(prefix, regex), cb)
 
 
 def add_fetch_callback(uid, callback):
@@ -39,9 +40,13 @@ def execute_callback(uid):
         cb()
 
 
-def get_peer_uid_tuple(interest):
-    peer_id = int(interest.getName().get(-1).toEscapedString())
-    uid = int(interest.getName().get(-2).toEscapedString())
+def get_peer_uid_tuple(name_or_interest):
+    if isinstance(name_or_interest, pyndn.Interest):
+        name = name_or_interest.getName()
+    else:
+        name = name_or_interest
+    peer_id = int(name.get(-1).toEscapedString())
+    uid = int(name.get(-2).toEscapedString())
     return peer_id, uid
 
 
