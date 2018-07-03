@@ -54,7 +54,20 @@ def emit_entity_state_change(entity):
 
     update = entities.Update(type=const.status_code.STATE_CHANGE,
                              value=entity.diff)
-    send_entity_update_data(entity.uid, update)
+    send_entity_update_data(entity.uid, entity.version, update)
+
+
+def emit_entity_catch_up(entity, version):
+    logger.trace('Emit catch up for entity %d [%d -> %d]',
+                 entity.uid, version, entity.version)
+    diff = entity.diff.compute_diff_from(version)
+    if diff is None:
+        update = entities.Update(type=const.status_code.FULL_STATE,
+                                 value=entities.Diff(entity))
+    else:
+        update = entities.Update(type=const.status_code.STATE_CHANGE,
+                                 value=diff)
+    send_entity_update_data(entity.uid, version, update)
 
 
 # EntityUpdateInterest
@@ -89,13 +102,14 @@ def send_entity_update_interest(uid, interest=None):
     name = pyndn.Name(peer.prefix) \
         .append('entity') \
         .append(str(uid)) \
-        .append('updates')
+        .append('updates') \
+        .append(str(entity.version))
 
     if chunk_coord in mngt.player_watch:
         name.append('touch')
 
-    logger.trace('Sending EntityUpdateInterest for entity %d to %d',
-                 uid, peer.uid)
+    logger.trace('Sending EntityUpdateInterest for entity %d to %d, %s',
+                 uid, peer.uid, name)
     mngt.context.face.expressInterest(
         name,
         mngt.on_entity_update_data,
@@ -107,22 +121,36 @@ def on_entity_update_interest(prefix, interest, face, interest_filter_id):
     touch = False
     if interest.getName().get(-1).toEscapedString() == 'touch':
         touch = True
-    uid = int(interest.getName().get(-2 - touch).toEscapedString())
-    logger.trace('Received EntityUpdateInterest for entity %d', uid)
+    uid = int(interest.getName().get(-3 - touch).toEscapedString())
+    version = int(interest.getName().get(-1 - touch).toEscapedString())
+
+    logger.trace(
+        'Received EntityUpdateInterest for entity %d  with version %d',
+        uid, version)
+
     entity = mngt.context.object_store.get(uid)
-    if entity is not None and touch:
-        entity.touch()
-    elif not entity:
+    if entity is not None:
+        logger.trace('Found entity in local store with version %d',
+                     entity.version)
+        if touch:
+            entity.touch()
+        if version < entity.version:
+            mngt.emit_entity_catch_up(entity, version)
+        else:
+            logger.trace('Entity %d update to date in remote store',
+                         entity.uid)
+    else:
         mngt.load_entity(uid)
 
 
-def send_entity_update_data(uid, update):
+def send_entity_update_data(uid, version, update):
     logger.trace('Sending EntityUpdateData for entity %d %s', uid, update)
 
     name = pyndn.Name(mngt.context.local_name) \
         .append('entity') \
         .append(str(uid)) \
         .append('updates') \
+        .append(str(version)) \
         .append('touch')
 
     entity_update_data = pyndn.Data(name)
@@ -131,11 +159,12 @@ def send_entity_update_data(uid, update):
 
 
 def on_entity_update_data(interest, data):
-    uid = int(data.getName().get(-3).toEscapedString())
+    uid = int(data.getName().get(-4).toEscapedString())
     logger.trace('Update received for entity %d', uid)
     entity = mngt.context.object_store.get(uid, expend_chunk=False)
     _, update = entities.Update.deserialize(data.getContent().toBytes())
-    if update.type == const.status_code.STATE_CHANGE:
+    if update.type in (const.status_code.STATE_CHANGE,
+                       const.status_code.FULL_STATE):
         entity.update(update.value)
     mngt.send_entity_update_interest(uid)
 

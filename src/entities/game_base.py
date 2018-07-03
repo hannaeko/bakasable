@@ -1,4 +1,8 @@
 import os
+import copy
+import inspect
+from collections import deque
+from functools import reduce
 
 import pygame
 
@@ -66,7 +70,8 @@ class GameObject(Entity, metaclass=GameObjectType):
 
     @property
     def is_fresh(self):
-        return (self.x // 15, self.y // 15) in mngt.player_watch or self.freshness + const.FRESH_TIMEOUT > get_timestamp()
+        return (self.x // 15, self.y // 15) in mngt.player_watch or \
+               self.freshness + const.FRESH_TIMEOUT > get_timestamp()
 
     @classmethod
     def serialize(cls, object):
@@ -90,16 +95,36 @@ class GameObject(Entity, metaclass=GameObjectType):
 
 
 class Diff:
-    def __init__(self, klass):
-        self.klass = klass
+    def __init__(self, obj):
         self.diff = {}
+
+        if inspect.isclass(obj):
+            self.klass = obj
+        else:
+            self.klass = type(obj)
+            for attr in obj.attr:
+                self.diff[attr] = getattr(obj, attr)
+            del self.diff['uid']
+
+        self.archives = deque(maxlen=50)
 
     def add(self, name, value):
         self.diff[name] = value
         self.diff['version'] = get_timestamp()
 
     def clear(self):
-        self.diff.clear()
+        if len(self.diff):
+            self.archives.append(copy.deepcopy(self.diff))
+            self.diff.clear()
+
+    def compute_diff_from(self, version):
+        if self.archives and self.archives[0]['version'] <= version:
+            tot_update = {}
+            for update in filter(lambda u: u['version'] > version,
+                                 self.archives):
+                tot_update.update(update)
+            tot_diff = Diff(self.klass)
+            tot_diff.diff = tot_update
 
     @staticmethod
     def serialize(diff):
@@ -119,7 +144,7 @@ class Diff:
             payload, attr_index = Number.deserialize(payload)
             attr_name, attr_type = klass.definition[attr_index]
             payload, attr_value = attr_type.deserialize(payload)
-            diff.add(attr_name, attr_value)
+            diff.diff[attr_name] = attr_value
         return payload, diff
 
     def __len__(self):
@@ -159,7 +184,6 @@ class UpdatableGameObject(GameObject):
 
         for key, value in new_diff.diff.items():
             object.__setattr__(self, key, value)
-
         self.diff.clear()
 
     def chunk_changed(self):

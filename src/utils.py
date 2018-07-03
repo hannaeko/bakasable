@@ -31,8 +31,8 @@ entity_found_regex = '<entity_found><[0-9]+>{3}'
 # match /entity/<entity uid>/fetch
 entity_fetch_regex = '<entity><[0-9]+><fetch>'
 
-# match /entity/<entity uid>/update/<"touch" or nothing>
-entity_update_regex = '<entity><[0-9]+><updates><touch>?'
+# match /entity/<entity uid>/update/version>/<"touch" or nothing>
+entity_update_regex = '<entity><[0-9]+><updates><[0-9]+><touch>?'
 
 # match /coordinator_change/<entity uid>
 coordinator_change_regex = '<coordinator_change><[0-9]+>'
