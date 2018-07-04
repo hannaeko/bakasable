@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 recorvering_registry = {}
 pending_fetch = set()
+pending_update_interest = {}
 watched_chunks = set()
 player_watch = set()
 fetch_callbacks = {}

@@ -58,7 +58,7 @@ def emit_entity_state_change(entity):
 
 
 def emit_entity_catch_up(entity, version):
-    logger.trace('Emit catch up for entity %d [%d -> %d]',
+    logger.debug('Emit catch up for entity %d [%d -> %d]',
                  entity.uid, version, entity.version)
     diff = entity.diff.compute_diff_from(version)
     if diff:
@@ -72,8 +72,17 @@ def emit_entity_catch_up(entity, version):
 
 # EntityUpdateInterest
 
-def send_entity_update_interest(uid, interest=None):
+def send_entity_update_interest(uid, version=None, interest=None):
     entity = mngt.context.object_store.get(uid)
+    pending_info = mngt.pending_update_interest.setdefault(
+        entity.uid, [0, entity.version])
+
+    if version is None:
+        version = pending_info[1]
+
+    # Called after timeout
+    if interest is not None:
+        pending_info[0] -= 1
 
     peer = mngt.context.peer_store.get_closest_peer(uid)
     chunk_coord = (entity.x // 15, entity.y // 15)
@@ -103,7 +112,7 @@ def send_entity_update_interest(uid, interest=None):
         .append('entity') \
         .append(str(uid)) \
         .append('updates') \
-        .append(str(entity.version))
+        .append(str(version))
 
     if chunk_coord in mngt.player_watch:
         name.append('touch')
@@ -113,7 +122,13 @@ def send_entity_update_interest(uid, interest=None):
     mngt.context.face.expressInterest(
         name,
         mngt.on_entity_update_data,
-        functools.partial(mngt.send_entity_update_interest, uid))
+        functools.partial(mngt.send_entity_update_interest, uid, version))
+
+    pending_info[0] += 1
+    pending_info[1] = max(pending_info[1], version + 1)
+
+    if pending_info[0] <= const.MAX_PENDING_UPDATE_INTEREST:
+        mngt.send_entity_update_interest(uid)
 
 
 @mngt.register_interest_filter('local', utils.entity_update_regex)
@@ -135,7 +150,7 @@ def on_entity_update_interest(prefix, interest, face, interest_filter_id):
         if touch:
             entity.touch()
         # NOTE: remote version > local -> coordinator trust so send full state
-        if version != entity.version:
+        if version < entity.version:
             mngt.emit_entity_catch_up(entity, version)
         else:
             logger.trace('Entity %d update to date in remote store',
@@ -166,7 +181,10 @@ def on_entity_update_data(interest, data):
     _, update = entities.Update.deserialize(data.getContent().toBytes())
     if update.type in (const.status_code.STATE_CHANGE,
                        const.status_code.FULL_STATE):
+        logger.trace('Version %d => %d',
+                     entity.version, update.value.diff['version'])
         entity.update(update.value)
+    mngt.pending_update_interest[uid][0] -= 1
     mngt.send_entity_update_interest(uid)
 
 
