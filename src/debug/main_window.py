@@ -4,6 +4,7 @@ from tkinter import ttk
 from bakasable.debug.objectstoreframe import ObjectStoreFrame
 from bakasable.debug.peerstoreframe import PeerStoreFrame
 from bakasable.debug.mapframe import MapFrame
+from bakasable.debug.generalinfoframe import GeneralInfoFrame
 
 
 class MainWindow(tk.Frame):
@@ -22,3 +23,5 @@ class MainWindow(tk.Frame):
         self.tabs.add(self.peer_store_frame, text='Peer store')
         self.map_frame = MapFrame(self.context, self.tabs)
         self.tabs.add(self.map_frame, text='World map')
+        self.general_info_frame = GeneralInfoFrame(self.context, self.tabs)
+        self.tabs.add(self.general_info_frame, text='General Info')
