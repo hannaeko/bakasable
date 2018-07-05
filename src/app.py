@@ -85,7 +85,7 @@ class App(object):
         self.start()
         entities.mngt.load_entity(self.peer_id)
         while self.carry_on:
-            self.dt = self.clock.tick(20)
+            self.dt = self.clock.tick_busy_loop(20)
             self.loop()
             self.pending_input = select.select([sys.stdin, ], [], [], 0.0)[0]
             self.carry_on = self.carry_on and not self.pending_input
