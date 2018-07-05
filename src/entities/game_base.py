@@ -186,10 +186,13 @@ class UpdatableGameObject(GameObject):
     def update(self, new_diff=None):
         if new_diff is None:
             new_diff = self.diff
-
-        for key, value in new_diff.diff.items():
-            object.__setattr__(self, key, value)
-        self.diff.clear()
+        try:
+            if new_diff.diff['version'] > self.version:
+                for key, value in new_diff.diff.items():
+                    object.__setattr__(self, key, value)
+                self.diff.clear()
+        except KeyError:
+            pass
 
     def chunk_changed(self):
         if 'x' in self.diff.diff or 'y' in self.diff.diff:

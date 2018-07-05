@@ -184,6 +184,9 @@ def on_entity_update_data(interest, data):
         logger.trace('Version %d => %d',
                      entity.version, update.value.diff['version'])
         entity.update(update.value)
+        if update.type == const.status_code.FULL_STATE and \
+                mngt.pending_update_interest[uid][1] < entity.version:
+            mngt.pending_update_interest[uid][1] = entity.version
     mngt.pending_update_interest[uid][0] -= 1
     mngt.send_entity_update_interest(uid)
 
