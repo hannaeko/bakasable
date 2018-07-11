@@ -18,7 +18,7 @@ import bakasable.logic.game  # register on_event think functions
 
 
 class App(object):
-    def __init__(self, game_id, pseudo, peer_id, graphics=True):
+    def __init__(self, host, game_id, pseudo, peer_id, graphics=True):
         global context
         context = self
 
@@ -29,7 +29,7 @@ class App(object):
 
         self.keychain = pyndn.security.KeyChain()
 
-        self.face = pyndn.Face('192.168.20.167')
+        self.face = pyndn.Face(host)
         self.face.setCommandSigningInfo(
             self.keychain, self.keychain.getDefaultCertificateName())
 

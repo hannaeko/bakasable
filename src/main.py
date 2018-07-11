@@ -35,6 +35,12 @@ def main():
         description=' Peer to peer multiplayer sandbox game based on NDN.')
 
     parser.add_argument(
+        '--host', '-H',
+        metavar='<nfd_host>',
+        help='Address of the host to connect to.',
+        default='localhost')
+
+    parser.add_argument(
         '--game', '-g',
         metavar='<game_id>',
         help='Set the game id to connect to.',
@@ -82,7 +88,8 @@ def main():
 
     logger.info('Starting app with game_id=%s and peer_id=%s',
                 args.game, args.peer)
-    my_app = bakasable.App(args.game,
+    my_app = bakasable.App(args.host,
+                           args.game,
                            args.pseudo,
                            args.peer,
                            not args.disable_graphics)
