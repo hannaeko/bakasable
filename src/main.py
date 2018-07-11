@@ -4,6 +4,7 @@ import sys
 import argparse
 
 import bakasable
+import bakasable.config
 import bakasable.debug
 
 
@@ -30,6 +31,8 @@ def setup_logger():
 
 def main():
     setup_logger()
+    config = bakasable.config.get_config()
+
     parser = argparse.ArgumentParser(
         prog='bakasable',
         description=' Peer to peer multiplayer sandbox game based on NDN.')
@@ -38,38 +41,41 @@ def main():
         '--host', '-H',
         metavar='<nfd_host>',
         help='Address of the host to connect to.',
-        default='localhost')
+        default=config.get('main', 'host', fallback='localhost'))
 
     parser.add_argument(
         '--game', '-g',
         metavar='<game_id>',
         help='Set the game id to connect to.',
-        default=random.getrandbits(64),
+        default=config.getint(
+            'main', 'game_id', fallback=random.getrandbits(64)),
         type=int)
 
     parser.add_argument(
         '--peer', '-p',
         metavar='<peer_id>',
         help='Set the peer id.',
-        default=random.getrandbits(64),
+        default=config.getint(
+            'main', 'peer_id', fallback=random.getrandbits(64)),
         type=int)
 
     parser.add_argument(
         '--pseudo', '-P',
         metavar='<pseudo>',
         help='Set player pseudo.',
-        default='toto')
+        default=config.get('main', 'pseudo', fallback='toto'))
 
     parser.add_argument(
         '--disable-graphics', '-d',
         help='Disable graphical interface',
-        action='store_true'
-    )
+        action='store_true',
+        default=not config.getboolean('main', 'graphics', fallback=True))
 
     parser.add_argument(
         '--debug', '-D',
         help='Display debug tool',
-        action='store_true')
+        action='store_true',
+        default=config.getboolean('main', 'debug_tool', fallback=False))
 
     parser.add_argument(
         '-v',
@@ -84,10 +90,13 @@ def main():
                  logging.INFO,
                  logging.DEBUG,
                  logging.TRACE]
-    logging.getLogger().setLevel(loglevels[3 if args.v is None else args.v])
+    logging.getLogger().setLevel(loglevels[
+        config.getint('main', 'log_verbosity', fallback=3)
+        if args.v is None else args.v])
 
     logger.info('Starting app with game_id=%s and peer_id=%s',
                 args.game, args.peer)
+
     my_app = bakasable.App(args.host,
                            args.game,
                            args.pseudo,

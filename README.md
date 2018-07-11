@@ -24,6 +24,19 @@ To install the game run `python setup.py install`. The game can now be launch us
 
 For help with command line argument run `bakasable -h`.
 
+The parameters can also be passed to the program via a configuration file (located in `~/.config/Bakasable` on Linux):
+
+```ini
+[main]
+host = localhost
+game_id = 9167703031163671367
+peer_id = 15659081325889787534
+pseudo = toto
+graphics = yes
+debug_tool = no
+log_verbosity = 3
+```
+
 ## Development
 
 To install the project in a development environment, run `python setup.py develop`. Apparently due to some [bug](https://github.com/pypa/setuptools/issues/230) in setuptools you will need to symlink the `src` folder to `bakasable` to access the package.
