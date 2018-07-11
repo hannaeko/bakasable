@@ -24,7 +24,8 @@ To install the game run `python setup.py install`. The game can now be launch us
 
 For help with command line argument run `bakasable -h`.
 
-The parameters can also be passed to the program via a configuration file (located in `~/.config/Bakasable` on Linux):
+The parameters can also be passed to the program via a configuration file (located in `~/.config/Bakasable` on Linux).  
+Example of configuration :
 
 ```ini
 [main]
@@ -39,7 +40,7 @@ log_verbosity = 3
 
 ## Development
 
-To install the project in a development environment, run `python setup.py develop`. Apparently due to some [bug](https://github.com/pypa/setuptools/issues/230) in setuptools you will need to symlink the `src` folder to `bakasable` to access the package.
+To install the project in a development environment, run `python setup.py develop`.
 
 The command works the same as for a normal installation.
 

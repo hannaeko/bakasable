@@ -11,3 +11,4 @@ pygame==1.9.3
 PyNDN==2.8b1
 six==1.11.0
 sortedcontainers==2.0.4
+appdirs==1.4.3
