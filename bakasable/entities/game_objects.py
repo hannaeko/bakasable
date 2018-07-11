@@ -15,6 +15,7 @@ from bakasable.entities.primitives import (
 from bakasable.entities.game_base import GameObject, UpdatableGameObject
 from bakasable.const import terrain
 from bakasable.const import TILE_SIZE, SHEEP_WALKING_RANGE
+from bakasable import game
 
 
 class MapChunk(GameObject):
@@ -103,3 +104,12 @@ class Player(UpdatableGameObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.speed = pygame.math.Vector2(0, 0)
+        self._additional_sprites = None
+
+    @property
+    def additional_sprites(self):
+        if self._additional_sprites is None:
+            self.pseudo_label = game.monospace.render(
+                self.pseudo, 1, (0, 0, 0))
+            self._additional_sprites = [(self.pseudo_label, 0, -20)]
+        return self._additional_sprites

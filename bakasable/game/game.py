@@ -28,6 +28,7 @@ class Game:
             return
 
         screen_rect = self.screen.get_rect()
+        self.screen.fill((0, 0, 0))
 
         top_left_x = round(player.x * TILE_SIZE - screen_rect.w / 2)
         top_left_y = round(player.y * TILE_SIZE - screen_rect.h / 2)
@@ -56,6 +57,14 @@ class Game:
                     self.screen.blit(entity.current_frame,
                                      (entity.x * TILE_SIZE - top_left_x,
                                       entity.y * TILE_SIZE - top_left_y))
+                try:
+                    for sprite, x_delta, y_delta in entity.additional_sprites:
+                        self.screen.blit(
+                            sprite,
+                            (entity.x * TILE_SIZE - top_left_x + x_delta,
+                             entity.y * TILE_SIZE - top_left_y + y_delta))
+                except AttributeError:
+                    pass
 
     def process_events(self):
         if not self.context.graphics:

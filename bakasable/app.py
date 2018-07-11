@@ -97,6 +97,7 @@ class App(object):
 
         self.peers_mngt.start()
         entities.mngt.start(self)
+        pygame.init()
 
         while not self.connected:
             self.face.processEvents()
