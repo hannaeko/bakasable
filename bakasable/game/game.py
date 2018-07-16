@@ -53,7 +53,6 @@ class Game:
 
         for entity in entity_bag:
             if entity.sprite_name:
-                entity.frame_index = entity.sprite.update(self.context.dt)
                 self.screen.blit(entity.current_frame,
                                  (entity.x * TILE_SIZE - top_left_x,
                                   entity.y * TILE_SIZE - top_left_y))

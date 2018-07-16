@@ -22,7 +22,7 @@ from bakasable.const import TILE_SIZE, SHEEP_WALKING_RANGE
 from bakasable import game
 
 
-class MapChunk(DrawableGameObject):
+class MapChunk(GameObject):
     id = 1
     override_base = True
     definition = (

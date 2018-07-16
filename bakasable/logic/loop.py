@@ -7,6 +7,7 @@ import pygame
 from bakasable.think import on_loop
 from bakasable.entities import (
     UpdatableGameObject,
+    DrawableGameObject,
     MapChunk,
     Sheep,
     Player,
@@ -78,6 +79,11 @@ def random_walk_sheep(context, target, **kw):
 def update_player(context, target, **kw):
     target.x += target.speed.x * context.dt
     target.y += target.speed.y * context.dt
+
+
+@on_loop(priority=200, target=DrawableGameObject)
+def update_sprite(context, target, **kw):
+    target.frame_index = target.sprite.update(context.dt)
 
 
 @on_loop(priority=300, target=UpdatableGameObject)
