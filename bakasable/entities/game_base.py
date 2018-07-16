@@ -188,27 +188,22 @@ class UpdatableGameObject(GameObject):
         return False
 
 
-class FrameDef(Entity):
-    definition = (
-        ('indice', Number),
-    )
-
-
 class DrawableGameObject(GameObject):
-    # definition = (
-    #     ('frame_def', FrameDef),
-    # )
+    definition = (
+        ('frame_index', Number),
+    )
 
     sprite_name = None
     animated = False
 
     def __init__(self, **kwargs):
+        kwargs.setdefault('frame_index', 0)
         super().__init__(**kwargs)
         self._sprite = None
 
     @property
     def current_frame(self):
-        return self.sprite.current_frame
+        return self.sprite.frames[self.frame_index]
 
     @property
     def sprite(self):

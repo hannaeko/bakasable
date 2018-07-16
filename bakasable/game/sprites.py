@@ -34,7 +34,7 @@ class Sprite:
             self.cache[filename] = self.frames
 
         self.animation_length = FRAME_LENGTH * len(self.frames)
-        self.current_frame = self.frames[0]
+        self.current_frame = 0
         self.total_time = self.start_time = 0
         self.loop = loop
         self.animated = animated
@@ -47,8 +47,9 @@ class Sprite:
             self.total_time < self.start_time + self.animation_length)
 
         if animated:
-            self.current_frame = self.frames[
-                (self.total_time // FRAME_LENGTH) % len(self.frames)]
+            self.current_frame = self.total_time // FRAME_LENGTH
+            self.current_frame %= len(self.frames)
+        return self.current_frame
 
     def start_animation(self, loop=True):
         self.animated = True
