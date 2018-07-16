@@ -1,7 +1,7 @@
 import os
 import copy
 import inspect
-from collections import deque
+from collections import deque, OrderedDict
 from functools import reduce
 
 import pygame
@@ -32,11 +32,11 @@ class GameObjectType(type):
     object in registry.
     """
     def __new__(cls, name, bases, namespace, **kwargs):
-        if 'definition' not in namespace:
-            namespace['definition'] = ()
+        definition = OrderedDict(namespace['definition'])
         if not namespace.get('override_base', False):
             for klass in bases:
-                namespace['definition'] += getattr(klass, 'definition', ())
+                definition.update(getattr(klass, 'definition', ()))
+        namespace['definition'] = tuple(definition.items())
 
         res = super().__new__(cls, name, bases, namespace)
         _registry[res.id] = res
