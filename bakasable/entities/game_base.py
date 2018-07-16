@@ -56,13 +56,10 @@ class GameObject(Entity, metaclass=GameObjectType):
         ('uid', UID64),
     )
 
-    sprite_name = None
-    animated = False
     interest_zone = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._sprite = None
         self.active = False
         self.touch()
 
@@ -82,17 +79,6 @@ class GameObject(Entity, metaclass=GameObjectType):
     def deserialize(cls, payload):
         payload, object_id = Number.deserialize(payload)
         return super(GameObject, _registry[object_id]).deserialize(payload)
-
-    @property
-    def current_frame(self):
-        if self.sprite_name:
-            return self.sprite.current_frame
-
-    @property
-    def sprite(self):
-        if self._sprite is None:
-            self._sprite = game.Sprite(self.sprite_name, self.animated)
-        return self._sprite
 
 
 class Diff:
@@ -200,3 +186,32 @@ class UpdatableGameObject(GameObject):
             new_y = self.diff.diff.get('y', self.y)
             return new_x // 15 != self.x // 15 or new_y // 15 != self.y // 15
         return False
+
+
+class FrameDef(Entity):
+    definition = (
+        ('indice', Number),
+    )
+
+
+class DrawableGameObject(GameObject):
+    # definition = (
+    #     ('frame_def', FrameDef),
+    # )
+
+    sprite_name = None
+    animated = False
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._sprite = None
+
+    @property
+    def current_frame(self):
+        return self.sprite.current_frame
+
+    @property
+    def sprite(self):
+        if self._sprite is None:
+            self._sprite = game.Sprite(self.sprite_name, self.animated)
+        return self._sprite

@@ -12,13 +12,17 @@ from bakasable.entities.primitives import (
     String,
     UID64
 )
-from bakasable.entities.game_base import GameObject, UpdatableGameObject
+from bakasable.entities.game_base import (
+    GameObject,
+    UpdatableGameObject,
+    DrawableGameObject
+)
 from bakasable.const import terrain
 from bakasable.const import TILE_SIZE, SHEEP_WALKING_RANGE
 from bakasable import game
 
 
-class MapChunk(GameObject):
+class MapChunk(DrawableGameObject):
     id = 1
     override_base = True
     definition = (
@@ -71,7 +75,7 @@ class Chunk(GameObject):
         pass
 
 
-class Sheep(UpdatableGameObject):
+class Sheep(UpdatableGameObject, DrawableGameObject):
     id = 3
     sprite_name = 'sheep.png'
     definition = (
@@ -92,7 +96,7 @@ class Sheep(UpdatableGameObject):
                            self.init_y + SHEEP_WALKING_RANGE))
 
 
-class Player(UpdatableGameObject):
+class Player(UpdatableGameObject, DrawableGameObject):
     id = 4
     definition = (
         ('pseudo', String),
