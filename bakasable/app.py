@@ -11,7 +11,8 @@ from bakasable import (
     peers,
     entities,
     game,
-    think
+    think,
+    const
 )
 import bakasable.logic.loop  # register on_loop think functions
 import bakasable.logic.game  # register on_event think functions
@@ -85,7 +86,7 @@ class App(object):
         self.start()
         entities.mngt.load_entity(self.peer_id)
         while self.carry_on:
-            self.dt = self.clock.tick_busy_loop(20)
+            self.dt = self.clock.tick_busy_loop(const.TPS)
             self.loop()
             self.pending_input = select.select([sys.stdin, ], [], [], 0.0)[0]
             self.carry_on = self.carry_on and not self.pending_input
