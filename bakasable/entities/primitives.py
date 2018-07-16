@@ -45,7 +45,7 @@ class UID64(Number):
 
 class Float(Number, float):
     """
-    Floating point number of 4 bytes (big endian IEE 754)
+    Floating point number of 8 bytes (big endian IEE 754)
     """
     my_struct = struct.Struct('!d')
 
