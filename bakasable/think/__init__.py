@@ -3,7 +3,7 @@ import inspect
 
 
 class BaseThink:
-    bag = set()
+    bag = None
 
     def __init__(self, **param):
         self.action_param = param
@@ -27,10 +27,12 @@ class BaseThink:
 
 
 class on_action(BaseThink):
+    bag = set()
     pass
 
 
 class on_event(BaseThink):
+    bag = set()
     pass
 
 

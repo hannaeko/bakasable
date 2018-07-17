@@ -50,6 +50,13 @@ class Float(Number, float):
     my_struct = struct.Struct('!d')
 
 
+class Boolean(Number):
+    """
+    Boolean type number, 1 byte, \x00 or \x01
+    """
+    my_struct = struct.Struct('!?')
+
+
 class _Array(list):
     """
     Represent a list where all elements have the same type.
