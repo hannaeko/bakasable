@@ -161,9 +161,10 @@ class UpdatableGameObject(GameObject):
     def __setattr__(self, name, value):
         try:
             if name in self.attr:
-                if not self.diff:
-                    self.diff.add('version', self.version + 1)
-                self.diff.add(name, value)
+                if getattr(self, name, None) != value:
+                    if not self.diff:
+                        self.diff.add('version', self.version + 1)
+                    self.diff.add(name, value)
             else:
                 object.__setattr__(self, name, value)
         except AttributeError:
