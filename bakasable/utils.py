@@ -37,6 +37,9 @@ entity_update_regex = '<entity><[0-9]+><updates><[0-9]+><touch>?'
 # match /coordinator_change/<entity uid>
 coordinator_change_regex = '<coordinator_change><[0-9]+>'
 
+# match /entity/<entity uid>/action/<sender uid>/<action type>
+action_interest_regex = '<entity><[0-9]+><action><[0-9]+><[0-9]+>'
+
 module_path = os.path.abspath(os.path.dirname(__file__))
 asset_path = os.path.join(module_path, 'assets')
 
