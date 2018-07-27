@@ -58,4 +58,4 @@ def primary_action(context, **kw):
 
 @on_action(type=actions.PRIMARY, target=Sheep, sender=Player)
 def shear_sheep(target, **kw):
-    print('Sheep shorn')
+    target.sprite.current_frame = 1

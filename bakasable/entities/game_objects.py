@@ -77,7 +77,7 @@ class Chunk(GameObject):
 
 class Sheep(UpdatableGameObject, DrawableGameObject):
     id = 3
-    sprite_name = 'sheep.png'
+    sprite_name = 'sheep'
     definition = (
         ('init_x', Float),
         ('init_y', Float)
