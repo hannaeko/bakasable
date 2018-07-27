@@ -34,4 +34,10 @@ def send_action_interest(peer, type, target, sender):
 
 @mngt.register_interest_filter('local', utils.action_interest_regex)
 def on_action_interest(prefix, interest, face, interest_filter_id):
-    logger.debug('Received ActionInterest')
+    name = interest.getName()
+    target = mngt.context.object_store.get(int(name.get(-4).toEscapedString()))
+    sender = mngt.context.object_store.get(int(name.get(-2).toEscapedString()))
+    action = int(name.get(-1).toEscapedString())
+    logger.debug('Received ActionInterest {%d => %d (type=%d)}',
+                 sender.uid, target.uid, action)
+    on_action.execute({'type': action, 'target': target, 'sender': sender})
