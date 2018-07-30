@@ -90,10 +90,10 @@ class Sheep(UpdatableGameObject, DrawableGameObject):
 
     def change_direction(self):
         self.direction = pygame.math.Vector2(
-            random.uniform(self.init_x - SHEEP_WALKING_RANGE,
-                           self.init_x + SHEEP_WALKING_RANGE),
-            random.uniform(self.init_y - SHEEP_WALKING_RANGE,
-                           self.init_y + SHEEP_WALKING_RANGE))
+            random.uniform(self.x - SHEEP_WALKING_RANGE,
+                           self.x + SHEEP_WALKING_RANGE),
+            random.uniform(self.y - SHEEP_WALKING_RANGE,
+                           self.y + SHEEP_WALKING_RANGE))
 
 
 class Player(UpdatableGameObject, DrawableGameObject):

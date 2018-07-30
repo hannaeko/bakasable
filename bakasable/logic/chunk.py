@@ -40,6 +40,7 @@ def generate_chunk_entities(seed, x, y):
             y=(y*15+8),
             init_y=(y*15+8),
             uid=random.getrandbits(64))
+        for i in range(5)
         ]
 
 

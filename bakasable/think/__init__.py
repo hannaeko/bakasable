@@ -48,7 +48,6 @@ class on_loop(BaseThink):
         cls.execute({'type': 'global', 'context': context})
         for uid in set(context.object_store.coordinated):
             entity = context.object_store.get(uid, expend_chunk=False)
-            if entity.is_fresh:
-                cls.execute(
-                    {'target': entity,
-                     'context': context})
+            cls.execute(
+                {'target': entity,
+                 'context': context})
